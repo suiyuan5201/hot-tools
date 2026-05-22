@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>图片加水印 - 免费在线工具</title>
+  <meta name="description" content="免费在线图片加水印工具，支持文字水印，可调位置、透明度、大小、颜色，支持平铺水印">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>💧 图片加水印</h1>
+    <p class="subtitle">添加文字水印，保护图片版权</p>
+    <div class="upload-area" onclick="document.getElementById('fi').click()">
+      <div class="icon">📁</div><p>点击上传图片</p>
+      <input type="file" id="fi" accept="image/*">
+    </div>
+    <div id="editor" style="display:none">
+      <div class="preview-area">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px">
+          <label style="font-size:13px">水印文字：<input type="text" id="wtxt" class="input" value="© 版权所有" oninput="draw()"></label>
+          <label style="font-size:13px">字体大小：<input type="range" id="wsize" min="12" max="120" value="36" oninput="draw()" style="width:100%"></label>
+          <label style="font-size:13px">颜色：<input type="color" id="wcolor" value="#ffffff" oninput="draw()"></label>
+          <label style="font-size:13px">透明度：<input type="range" id="walpha" min="5" max="100" value="40" oninput="draw()" style="width:100%"> <span id="alphaV">40%</span></label>
+          <label style="font-size:13px">旋转角度：<input type="range" id="wangle" min="-90" max="90" value="-30" oninput="draw()" style="width:100%"> <span id="angleV">-30°</span></label>
+          <label style="font-size:13px;display:flex;align-items:center;gap:8px"><input type="checkbox" id="wtile" onchange="draw()"> 平铺水印</label>
+        </div>
+        <div style="font-size:13px;margin-bottom:10px">位置（非平铺时）：</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:180px;margin-bottom:15px">
+          <button class="btn btn-sm btn-outline" onclick="setPos('lt')">↖左上</button>
+          <button class="btn btn-sm btn-outline" onclick="setPos('ct')">↑上中</button>
+          <button class="btn btn-sm btn-outline" onclick="setPos('rt')">↗右上</button>
+          <button class="btn btn-sm btn-outline" onclick="setPos('lm')">←左中</button>
+          <button class="btn btn-sm btn-outline active" onclick="setPos('cm')">中心</button>
+          <button class="btn btn-sm btn-outline" onclick="setPos('rm')">右中→</button>
+          <button class="btn btn-sm btn-outline" onclick="setPos('lb')">↙左下</button>
+          <button class="btn btn-sm btn-outline" onclick="setPos('cb')">↓下中</button>
+          <button class="btn btn-sm btn-outline" onclick="setPos('rb')">↘右下</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin:15px 0"><canvas id="cv" style="max-width:100%;border-radius:8px;box-shadow:var(--shadow)"></canvas></div>
+      <div class="btn-group"><button class="btn" onclick="dl()">下载水印图片</button></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let img,pos='cm';
+  document.getElementById('fi').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{
+      img=new Image();img.onload=()=>{
+        document.querySelector('.upload-area').style.display='none';
+        document.getElementById('editor').style.display='block';draw();
+      };img.src=ev.target.result;
+    };r.readAsDataURL(f);
+  };
+  function setPos(p){pos=p;document.querySelectorAll('.preview-area .btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');draw();}
+  function draw(){
+    const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+    const maxW=Math.min(700,window.innerWidth-60),s=img.width>maxW?maxW/img.width:1;
+    cv.width=img.width*s;cv.height=img.height*s;
+    ctx.drawImage(img,0,0,cv.width,cv.height);
+    const txt=document.getElementById('wtxt').value||'水印';
+    const size=+document.getElementById('wsize').value*s;
+    const alpha=+document.getElementById('walpha').value/100;
+    const angle=+document.getElementById('wangle').value*Math.PI/180;
+    const color=document.getElementById('wcolor').value;
+    const tile=document.getElementById('wtile').checked;
+    document.getElementById('alphaV').textContent=document.getElementById('walpha').value+'%';
+    document.getElementById('angleV').textContent=document.getElementById('wangle').value+'°';
+    ctx.font=`bold ${size}px sans-serif`;
+    ctx.fillStyle=color;ctx.globalAlpha=alpha;
+    if(tile){
+      const gap=size*4;
+      for(let y=-cv.height;y<cv.height*2;y+=gap){
+        for(let x=-cv.width;x<cv.width*2;x+=gap){
+          ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.fillText(txt,0,0);ctx.restore();
+        }
+      }
+    }else{
+      const m=ctx.measureText(txt);
+      let x,y;
+      const px={'l':20,'c':(cv.width-m.width)/2,'r':cv.width-m.width-20};
+      const py={'t':size+20,'m':cv.height/2,'b':cv.height-20};
+      x=px[pos[0]]||px.c;y=py[pos[1]]||py.m;
+      ctx.save();ctx.translate(x+m.width/2,y-size/2);ctx.rotate(angle);
+      ctx.fillText(txt,-m.width/2,size/2);ctx.restore();
+    }
+    ctx.globalAlpha=1;
+  }
+  function dl(){
+    const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+    const x=c.getContext('2d');x.drawImage(img,0,0);
+    const txt=document.getElementById('wtxt').value||'水印';
+    const size=+document.getElementById('wsize').value;
+    const alpha=+document.getElementById('walpha').value/100;
+    const angle=+document.getElementById('wangle').value*Math.PI/180;
+    const color=document.getElementById('wcolor').value;
+    const tile=document.getElementById('wtile').checked;
+    x.font=`bold ${size}px sans-serif`;x.fillStyle=color;x.globalAlpha=alpha;
+    if(tile){const gap=size*4;for(let y=-c.height;y<c.height*2;y+=gap)for(let xx=-c.width;xx<c.width*2;xx+=gap){x.save();x.translate(xx,y);x.rotate(angle);x.fillText(txt,0,0);x.restore();}}
+    else{const m=x.measureText(txt);const px={'l':20,'c':(c.width-m.width)/2,'r':c.width-m.width-20};const py={'t':size+20,'m':c.height/2,'b':c.height-20};let bx=px[pos[0]]||px.c,by=py[pos[1]]||py.m;x.save();x.translate(bx+m.width/2,by-size/2);x.rotate(angle);x.fillText(txt,-m.width/2,size/2);x.restore();}
+    c.toBlob(b=>downloadBlob(b,'watermarked.png'),'image/png');showToast('下载成功！');
+  }
+  </script>
+</body>
+</html>

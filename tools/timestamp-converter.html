@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>时间戳转换 - 免费在线工具</title>
+  <meta name="description" content="免费在线时间戳转换工具，时间戳与日期时间互转，支持秒级和毫秒级">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>⏰ 时间戳转换</h1>
+    <p class="subtitle">时间戳与日期时间互相转换</p>
+    <div class="preview-area" style="text-align:center;margin-bottom:20px">
+      <div style="font-size:13px;color:var(--text-light);margin-bottom:5px">当前时间戳（实时）</div>
+      <div id="nowTs" style="font-size:2em;font-weight:700;color:var(--primary);font-family:monospace"></div>
+      <div id="nowTime" style="font-size:14px;color:var(--text-light);margin-top:4px"></div>
+      <button class="btn btn-sm" style="margin-top:10px" onclick="copyToClipboard(Math.floor(Date.now()/1000)+'')">复制秒级</button>
+      <button class="btn btn-sm btn-outline" style="margin-top:10px" onclick="copyToClipboard(Date.now()+'')">复制毫秒级</button>
+    </div>
+    <div class="compare-row">
+      <div class="compare-box">
+        <h3>时间戳 → 日期时间</h3>
+        <input type="text" id="tsIn" class="input" placeholder="输入时间戳（秒或毫秒）" oninput="ts2date()">
+        <div id="tsResult" style="margin-top:10px;font-size:14px;line-height:2"></div>
+      </div>
+      <div class="compare-box">
+        <h3>日期时间 → 时间戳</h3>
+        <input type="datetime-local" id="dtIn" class="input" onchange="date2ts()">
+        <div id="dtResult" style="margin-top:10px;font-size:14px;line-height:2"></div>
+      </div>
+    </div>
+    <div class="preview-area" style="margin-top:20px">
+      <h3>快捷时间</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn btn-sm btn-outline" onclick="quick('today')">今天0点</button>
+        <button class="btn btn-sm btn-outline" onclick="quick('tomorrow')">明天0点</button>
+        <button class="btn btn-sm btn-outline" onclick="quick('weekStart')">本周一</button>
+        <button class="btn btn-sm btn-outline" onclick="quick('monthStart')">本月1号</button>
+        <button class="btn btn-sm btn-outline" onclick="quick('yearStart')">今年1月1日</button>
+        <button class="btn btn-sm btn-outline" onclick="quick('yearEnd')">今年12月31日</button>
+      </div>
+      <div id="quickResult" style="margin-top:10px;font-size:14px"></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function updateNow(){
+    const now=Date.now();
+    document.getElementById('nowTs').textContent=Math.floor(now/1000);
+    document.getElementById('nowTime').textContent=new Date(now).toLocaleString();
+  }
+  setInterval(updateNow,1000);updateNow();
+
+  // 初始化datetime-local为当前时间
+  const now=new Date();
+  document.getElementById('dtIn').value=now.toISOString().slice(0,16);
+
+  function ts2date(){
+    let ts=document.getElementById('tsIn').value.trim();
+    if(!ts)return document.getElementById('tsResult').innerHTML='';
+    ts=+ts;
+    if(ts<1e12)ts*=1000; // 秒级转毫秒
+    const d=new Date(ts);
+    if(isNaN(d.getTime())){document.getElementById('tsResult').innerHTML='<span style="color:#ef4444">无效时间戳</span>';return;}
+    document.getElementById('tsResult').innerHTML=`
+      <div>本地时间: <b>${d.toLocaleString()}</b></div>
+      <div>UTC时间: <b>${d.toUTCString()}</b></div>
+      <div>ISO格式: <b>${d.toISOString()}</b></div>
+      <div>星期: <b>${['日','一','二','三','四','五','六'][d.getDay()]}</b></div>
+    `;
+  }
+
+  function date2ts(){
+    const val=document.getElementById('dtIn').value;
+    if(!val)return;
+    const d=new Date(val);
+    const sec=Math.floor(d.getTime()/1000);
+    const ms=d.getTime();
+    document.getElementById('dtResult').innerHTML=`
+      <div>秒级: <b>${sec}</b> <button class="btn btn-sm btn-outline" onclick="copyToClipboard('${sec}')">复制</button></div>
+      <div>毫秒级: <b>${ms}</b> <button class="btn btn-sm btn-outline" onclick="copyToClipboard('${ms}')">复制</button></div>
+    `;
+  }
+
+  function quick(type){
+    const d=new Date();let target;
+    switch(type){
+      case'today':target=new Date(d.getFullYear(),d.getMonth(),d.getDate());break;
+      case'tomorrow':target=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1);break;
+      case'weekStart':const day=d.getDay()||7;target=new Date(d.getFullYear(),d.getMonth(),d.getDate()-day+1);break;
+      case'monthStart':target=new Date(d.getFullYear(),d.getMonth(),1);break;
+      case'yearStart':target=new Date(d.getFullYear(),0,1);break;
+      case'yearEnd':target=new Date(d.getFullYear(),11,31,23,59,59);break;
+    }
+    const sec=Math.floor(target.getTime()/1000);
+    document.getElementById('quickResult').innerHTML=`${target.toLocaleString()} → <b>${sec}</b> <button class="btn btn-sm btn-outline" onclick="copyToClipboard('${sec}')">复制</button>`;
+  }
+  date2ts();
+  </script>
+</body>
+</html>

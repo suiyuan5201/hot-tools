@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>在线二维码生成器 - 免费在线工具</title>
+  <meta name="description" content="免费在线二维码生成器，支持文字、网址生成二维码，可自定义颜色和大小">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>📱 二维码生成器</h1>
+    <p class="subtitle">文字、网址快速生成二维码</p>
+    <div class="preview-area">
+      <textarea class="input" id="txt" rows="3" placeholder="输入文字或网址..." oninput="generate()">https://example.com</textarea>
+      <div class="options-row">
+        <label style="font-size:13px">大小: <select id="size" class="option-select" onchange="generate()"><option value="200">200px</option><option value="300" selected>300px</option><option value="400">400px</option><option value="500">500px</option></select></label>
+        <label style="font-size:13px">前景: <input type="color" id="fg" value="#000000" onchange="generate()"></label>
+        <label style="font-size:13px">背景: <input type="color" id="bgc" value="#ffffff" onchange="generate()"></label>
+      </div>
+      <div style="text-align:center;margin:20px 0"><canvas id="cv"></canvas></div>
+      <div class="btn-group"><button class="btn" onclick="dl()">下载二维码</button></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  // 简化版QR编码器(支持byte模式,版本1-10)
+  function generate(){
+    const text=document.getElementById('txt').value;
+    if(!text){document.getElementById('cv').getContext('2d').clearRect(0,0,500,500);return;}
+    const size=+document.getElementById('size').value;
+    const fg=document.getElementById('fg').value;
+    const bg=document.getElementById('bgc').value;
+    const cv=document.getElementById('cv');cv.width=size;cv.height=size;
+    const ctx=cv.getContext('2d');
+    // 使用简单的QR矩阵生成
+    const matrix=generateQR(text);
+    if(!matrix){ctx.fillStyle='#f00';ctx.font='14px sans-serif';ctx.fillText('文本过长',10,30);return;}
+    const modules=matrix.length;
+    const cellSize=size/modules;
+    ctx.fillStyle=bg;ctx.fillRect(0,0,size,size);
+    ctx.fillStyle=fg;
+    for(let y=0;y<modules;y++)for(let x=0;x<modules;x++){
+      if(matrix[y][x])ctx.fillRect(x*cellSize,y*cellSize,cellSize+.5,cellSize+.5);
+    }
+  }
+
+  function generateQR(text){
+    const data=new TextEncoder().encode(text);
+    const len=data.length;
+    // 选择版本(简化:最大版本6,容量max~134 bytes numeric, 用byte模式)
+    const versions=[0,17,32,53,78,106,134,154,192,230,271];
+    let ver=1;
+    for(let v=1;v<=10;v++){if(len<=versions[v]*.6){ver=v;break;}if(v===10)return null;}
+    const size=ver*4+17;
+    const matrix=Array.from({length:size},()=>Array(size).fill(0));
+    const reserved=Array.from({length:size},()=>Array(size).fill(false));
+
+    // 放置查找器图案
+    function placeFinderPattern(row,col){
+      for(let r=-1;r<=7;r++)for(let c=-1;c<=7;c++){
+        const rr=row+r,cc=col+c;
+        if(rr<0||rr>=size||cc<0||cc>=size)continue;
+        const inOuter=(r>=0&&r<=6&&c>=0&&c<=6);
+        const inInner=(r>=1&&r<=5&&c>=1&&c<=5);
+        const inCore=(r>=2&&r<=4&&c>=2&&c<=4);
+        matrix[rr][cc]=inCore?1:inInner?0:inOuter?1:0;
+        reserved[rr][cc]=true;
+      }
+    }
+    placeFinderPattern(0,0);placeFinderPattern(0,size-7);placeFinderPattern(size-7,0);
+
+    // 时序图案
+    for(let i=8;i<size-8;i++){
+      matrix[6][i]=i%2===0?1:0;reserved[6][i]=true;
+      matrix[i][6]=i%2===0?1:0;reserved[i][6]=true;
+    }
+
+    // 格式信息区域保留
+    for(let i=0;i<9;i++){reserved[8][i]=true;reserved[i][8]=true;reserved[8][size-1-i]=true;if(i<8)reserved[size-1-i][8]=true;}
+    matrix[size-8][8]=1;reserved[size-8][8]=true;
+
+    // 对齐图案(version>=2)
+    if(ver>=2){
+      const pos=[0,ver*4+10+2*Math.floor((ver-1)/7)*2];
+      // 简化:只放一个对齐图案
+      const ap=6+ver*4+2;
+      if(ap<size-8){
+        for(let r=-2;r<=2;r++)for(let c=-2;c<=2;c++){
+          const rr=ap+r,cc=ap+c;
+          if(reserved[rr][cc])continue;
+          matrix[rr][cc]=(Math.abs(r)===2||Math.abs(c)===2||(!r&&!c))?1:0;
+          reserved[rr][cc]=true;
+        }
+      }
+    }
+
+    // 数据编码(简化:byte模式,纠错L级)
+    let bits='0100'+len.toString(2).padStart(8,'0');
+    for(const b of data)bits+=b.toString(2).padStart(8,'0');
+    // 终止符和填充
+    bits+='0000';
+    while(bits.length%8)bits+='0';
+    const totalBytes=versions[ver];
+    while(bits.length<totalBytes*8){bits+='11101100';if(bits.length<totalBytes*8)bits+='00010001';}
+
+    // 放置数据(简化:从右下角开始蛇形放置)
+    let bitIdx=0;
+    for(let col=size-1;col>=1;col-=2){
+      if(col===6)col=5;
+      for(let i=0;i<size;i++){
+        for(let j=0;j<2;j++){
+          const c=col-j;
+          const r=((Math.floor((size-1-col)/2))%2===0)?size-1-i:i;
+          if(r<0||r>=size||c<0||c>=size)continue;
+          if(reserved[r][c])continue;
+          matrix[r][c]=bitIdx<bits.length?+bits[bitIdx]:0;
+          bitIdx++;
+        }
+      }
+    }
+
+    // 应用掩码0(棋盘格)
+    for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+      if(!reserved[r][c]&&(r+c)%2===0)matrix[r][c]^=1;
+    }
+
+    return matrix;
+  }
+
+  generate();
+  function dl(){const cv=document.getElementById('cv');cv.toBlob(b=>downloadBlob(b,'qrcode.png'),'image/png');showToast('下载成功！');}
+  </script>
+</body>
+</html>

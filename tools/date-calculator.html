@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>日期计算器 - 免费在线工具</title>
+  <meta name="description" content="免费在线日期计算器，计算两个日期之间的天数差，日期加减天数，倒计时">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>📅 日期计算器</h1>
+    <p class="subtitle">日期差值、加减天数、倒计时</p>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(0)">日期差</div>
+      <div class="tab" onclick="switchTab(1)">加减天数</div>
+      <div class="tab" onclick="switchTab(2)">倒计时</div>
+    </div>
+    <div id="tab0" class="preview-area">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <label style="font-size:14px">开始：<input type="date" id="d1" class="input" style="width:180px;display:inline-block"></label>
+        <span style="font-size:20px">→</span>
+        <label style="font-size:14px">结束：<input type="date" id="d2" class="input" style="width:180px;display:inline-block"></label>
+      </div>
+      <div class="btn-group"><button class="btn" onclick="calcDiff()">计算</button></div>
+      <div id="diffResult" style="text-align:center;font-size:15px;line-height:2"></div>
+    </div>
+    <div id="tab1" class="preview-area" style="display:none">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <label style="font-size:14px">日期：<input type="date" id="d3" class="input" style="width:180px;display:inline-block"></label>
+        <select id="op" class="option-select"><option value="1">加</option><option value="-1">减</option></select>
+        <input type="number" id="days" class="input" style="width:80px" value="30">
+        <span style="font-size:14px">天</span>
+      </div>
+      <div class="btn-group"><button class="btn" onclick="calcAdd()">计算</button></div>
+      <div id="addResult" style="text-align:center;font-size:15px;line-height:2"></div>
+    </div>
+    <div id="tab2" class="preview-area" style="display:none">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <label style="font-size:14px">目标日期：<input type="date" id="d4" class="input" style="width:180px;display:inline-block"></label>
+        <button class="btn btn-sm" onclick="calcCountdown()">计算</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:15px 0;justify-content:center">
+        <button class="btn btn-sm btn-outline" onclick="setQuick('2026-06-07')">高考</button>
+        <button class="btn btn-sm btn-outline" onclick="setQuick('2026-10-01')">国庆节</button>
+        <button class="btn btn-sm btn-outline" onclick="setQuick('2027-01-01')">元旦</button>
+        <button class="btn btn-sm btn-outline" onclick="setQuick('2027-01-29')">春节</button>
+      </div>
+      <div id="countdownResult" style="text-align:center;font-size:15px;line-height:2"></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('d1').value=today;
+  document.getElementById('d2').value=today;
+  document.getElementById('d3').value=today;
+  document.getElementById('d4').value='2026-10-01';
+
+  function switchTab(i){
+    document.querySelectorAll('.tab').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+    ['tab0','tab1','tab2'].forEach((id,idx)=>document.getElementById(id).style.display=idx===i?'':'none');
+  }
+
+  function calcDiff(){
+    const a=new Date(document.getElementById('d1').value),b=new Date(document.getElementById('d2').value);
+    if(isNaN(a)||isNaN(b))return;
+    const diff=Math.abs(b-a);
+    const days=Math.floor(diff/(1000*60*60*24));
+    const weeks=Math.floor(days/7);
+    const months=Math.abs((b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth()));
+    document.getElementById('diffResult').innerHTML=`
+      <div style="font-size:2em;font-weight:700;color:var(--primary)">${days} 天</div>
+      <div>约 ${weeks} 周 ${days%7} 天</div>
+      <div>约 ${months} 个月</div>
+      <div>约 ${(days/365).toFixed(1)} 年</div>
+    `;
+  }
+
+  function calcAdd(){
+    const d=new Date(document.getElementById('d3').value);
+    const n=+document.getElementById('days').value*+document.getElementById('op').value;
+    if(isNaN(d))return;
+    const result=new Date(d.getTime()+n*86400000);
+    const weekday='日一二三四五六'[result.getDay()];
+    document.getElementById('addResult').innerHTML=`
+      <div style="font-size:1.5em;font-weight:700;color:var(--primary)">${result.toLocaleDateString()}</div>
+      <div>星期${weekday}</div>
+    `;
+  }
+
+  function setQuick(date){document.getElementById('d4').value=date;calcCountdown();}
+
+  function calcCountdown(){
+    const target=new Date(document.getElementById('d4').value);
+    const now=new Date();
+    if(isNaN(target))return;
+    const diff=target-now;
+    if(diff<=0){document.getElementById('countdownResult').innerHTML='<div style="color:#ef4444">该日期已过</div>';return;}
+    const days=Math.floor(diff/(1000*60*60*24));
+    const hours=Math.floor((diff%(1000*60*60*24))/(1000*60*60));
+    document.getElementById('countdownResult').innerHTML=`
+      <div style="font-size:2em;font-weight:700;color:var(--primary)">还有 ${days} 天 ${hours} 小时</div>
+      <div style="color:var(--text-light)">目标：${target.toLocaleDateString()} 星期${'日一二三四五六'[target.getDay()]}</div>
+    `;
+  }
+  calcCountdown();
+  </script>
+</body>
+</html>

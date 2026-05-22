@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>免费在线工具箱 - 40+实用工具合集</title>
+  <meta name="description" content="免费在线工具箱，提供图片处理、文本转换、开发辅助、生活计算等40+实用工具，无需注册，所有处理在浏览器本地完成">
+  <meta name="keywords" content="在线工具,免费工具,图片压缩,图片转换,文本工具,开发工具,计算器,二维码生成">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .page-hero{text-align:center;padding:40px 20px 10px}
+    .page-hero h1{font-size:2.2em;margin-bottom:8px}
+    .page-hero h1 span{background:linear-gradient(135deg,var(--primary),#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .page-hero p{color:var(--text-light);font-size:15px;max-width:500px;margin:0 auto}
+    .search-box{max-width:500px;margin:20px auto;position:relative}
+    .search-box input{width:100%;padding:12px 20px 12px 44px;border:2px solid var(--border);border-radius:25px;font-size:15px;outline:none;background:#fff;transition:border .3s}
+    .search-box input:focus{border-color:var(--primary)}
+    .search-box svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-light)}
+    .category-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:25px 20px;max-width:800px;margin-left:auto;margin-right:auto}
+    .cat-tab{padding:7px 18px;border:1px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-size:13px;font-weight:500;transition:all .3s;color:var(--text)}
+    .cat-tab.active,.cat-tab:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;max-width:1200px;margin:0 auto 40px;padding:0 20px}
+    .tool-card{background:#fff;border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);cursor:pointer;transition:all .3s;border:1px solid transparent;text-decoration:none;color:inherit;display:block}
+    .tool-card:hover{transform:translateY(-4px);border-color:var(--primary-light);box-shadow:0 8px 30px rgba(99,102,241,.12)}
+    .tool-card .tc-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5em;margin-bottom:12px}
+    .tool-card .tc-name{font-weight:700;font-size:15px;margin-bottom:4px}
+    .tool-card .tc-desc{font-size:12.5px;color:var(--text-light);line-height:1.5}
+    .tool-card .tc-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;margin-top:8px;background:var(--bg);color:var(--text-light)}
+    .count-bar{text-align:center;color:var(--text-light);font-size:14px;margin-bottom:20px}
+    .count-bar b{color:var(--primary)}
+    .hot-banner{max-width:1200px;margin:0 auto 30px;padding:0 20px}
+    .hot-banner-inner{background:linear-gradient(135deg,#ef4444,#f97316);border-radius:var(--radius);padding:24px 30px;color:#fff;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .hot-banner-inner h3{font-size:1.15em;margin-bottom:3px}
+    .hot-banner-inner p{font-size:14px;opacity:.9}
+    .hot-banner-inner a{background:#fff;color:#ef4444;padding:10px 24px;border-radius:10px;font-weight:600;font-size:14px;margin-left:auto;white-space:nowrap;transition:transform .3s}
+    .hot-banner-inner a:hover{transform:scale(1.05)}
+    @media(max-width:768px){.tools-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}.page-hero h1{font-size:1.6em}.hot-banner-inner{flex-direction:column;text-align:center}.hot-banner-inner a{margin:0}}
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">🔥 热榜工具站</a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">热榜</a>
+      <a href="tools.html" class="nav-link active">工具箱</a>
+    </div>
+  </nav>
+
+  <div class="page-hero">
+    <h1>🛠 在线<span>工具箱</span></h1>
+    <p>40+ 免费实用工具，无需注册，隐私安全</p>
+  </div>
+
+  <div class="search-box">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="搜索工具..." id="searchInput" oninput="filterTools()">
+  </div>
+
+  <div class="category-tabs" id="catTabs"></div>
+  <div class="count-bar">共 <b id="toolCount">0</b> 个工具</div>
+  <div class="tools-grid" id="toolsGrid"></div>
+
+  <div class="hot-banner">
+    <div class="hot-banner-inner">
+      <div><h3>🔥 全网热榜聚合</h3><p>实时汇总微博、知乎、百度、抖音、B站等热搜榜单</p></div>
+      <a href="index.html">查看热榜 →</a>
+    </div>
+  </div>
+
+  <div class="ad-placeholder" style="max-width:1200px;margin:0 auto 30px">广告位 - Google AdSense</div>
+  <footer class="footer">免费在线工具箱 © 2024 | 所有处理均在浏览器本地完成，保护隐私 | <a href="index.html" style="color:var(--primary)">全网热榜</a></footer>
+
+  <script>
+  const TOOLS=[
+    // 图片类
+    {name:'图片压缩',desc:'在线压缩图片大小，支持批量处理',icon:'🗜️',cat:'图片',color:'#6366f1',file:'image-compressor.html'},
+    {name:'图片裁切',desc:'自由裁切或按比例裁切图片',icon:'✂️',cat:'图片',color:'#8b5cf6',file:'image-crop.html'},
+    {name:'图片缩放',desc:'调整图片尺寸，支持锁定比例',icon:'🔍',cat:'图片',color:'#a855f7',file:'image-resize.html'},
+    {name:'图片旋转翻转',desc:'旋转、翻转图片，支持任意角度',icon:'🔄',cat:'图片',color:'#6366f1',file:'image-rotate.html'},
+    {name:'图片加水印',desc:'添加文字水印，可调位置透明度',icon:'💧',cat:'图片',color:'#0ea5e9',file:'image-watermark.html'},
+    {name:'图片滤镜',desc:'10+滤镜预设，一键美化图片',icon:'🎨',cat:'图片',color:'#ec4899',file:'image-filter.html'},
+    {name:'图片马赛克',desc:'涂抹打码，保护隐私信息',icon:'🔲',cat:'图片',color:'#f43f5e',file:'image-mosaic.html'},
+    {name:'图片拼接',desc:'多图横向或纵向拼接合并',icon:'🧩',cat:'图片',color:'#14b8a6',file:'image-splice.html'},
+    {name:'图片转Base64',desc:'图片与Base64编码互相转换',icon:'🔤',cat:'图片',color:'#f59e0b',file:'image-base64.html'},
+    {name:'截图美化',desc:'给截图添加背景、圆角、阴影',icon:'📸',cat:'图片',color:'#8b5cf6',file:'screenshot-beautify.html'},
+    {name:'证件照制作',desc:'专业证件照，30+尺寸模板',icon:'🪪',cat:'图片',color:'#0891b2',file:'id-photo.html'},
+    {name:'二维码生成',desc:'文字/网址生成二维码图片',icon:'📱',cat:'图片',color:'#6366f1',file:'qrcode-generator.html'},
+
+    // 文本类
+    {name:'字数统计',desc:'实时统计字符数、词频、阅读时间',icon:'📊',cat:'文本',color:'#10b981',file:'word-count.html'},
+    {name:'文本对比',desc:'对比两段文本的差异，高亮显示',icon:'📄',cat:'文本',color:'#059669',file:'text-diff.html'},
+    {name:'文本转换',desc:'大小写、驼峰、去重、排序等',icon:'🔠',cat:'文本',color:'#14b8a6',file:'text-converter.html'},
+    {name:'Markdown编辑器',desc:'实时预览的Markdown编辑器',icon:'📝',cat:'文本',color:'#6366f1',file:'markdown-editor.html'},
+    {name:'密码生成器',desc:'随机生成安全密码，强度评估',icon:'🔐',cat:'文本',color:'#ef4444',file:'password-generator.html'},
+
+    // 开发类
+    {name:'JSON格式化',desc:'JSON美化、压缩、语法校验',icon:'{ }',cat:'开发',color:'#f59e0b',file:'json-formatter.html'},
+    {name:'正则测试',desc:'正则表达式在线测试和匹配',icon:'🔣',cat:'开发',color:'#8b5cf6',file:'regex-tester.html'},
+    {name:'代码格式化',desc:'格式化JSON/HTML/CSS/JS代码',icon:'💻',cat:'开发',color:'#6366f1',file:'code-formatter.html'},
+    {name:'颜色转换',desc:'HEX/RGB/HSL颜色互转+调色板',icon:'🎨',cat:'开发',color:'#ec4899',file:'color-converter.html'},
+    {name:'时间戳转换',desc:'时间戳与日期时间互相转换',icon:'⏰',cat:'开发',color:'#0ea5e9',file:'timestamp-converter.html'},
+    {name:'URL编码解码',desc:'URL/Base64/HTML实体编解码',icon:'🔗',cat:'开发',color:'#14b8a6',file:'url-codec.html'},
+    {name:'哈希计算',desc:'MD5/SHA1/SHA256/SHA512哈希',icon:'#️⃣',cat:'开发',color:'#f43f5e',file:'hash-generator.html'},
+    {name:'CSS渐变生成',desc:'可视化生成CSS渐变代码',icon:'🌈',cat:'开发',color:'#a855f7',file:'css-gradient.html'},
+    {name:'占位图生成',desc:'快速生成指定尺寸的占位图片',icon:'🖼️',cat:'开发',color:'#64748b',file:'placeholder-image.html'},
+    {name:'SVG编辑器',desc:'在线编辑预览SVG代码',icon:'✏️',cat:'开发',color:'#0891b2',file:'svg-editor.html'},
+    {name:'Favicon生成',desc:'在线绘制或上传生成网站图标',icon:'⭐',cat:'开发',color:'#eab308',file:'favicon-generator.html'},
+
+    // 生活类
+    {name:'房贷计算器',desc:'等额本息/本金，月供利息计算',icon:'🏠',cat:'生活',color:'#ef4444',file:'loan-calculator.html'},
+    {name:'BMI计算器',desc:'身体质量指数计算和健康评估',icon:'⚖️',cat:'生活',color:'#10b981',file:'bmi-calculator.html'},
+    {name:'个税计算器',desc:'2024最新税率表，到手工资计算',icon:'💰',cat:'生活',color:'#f59e0b',file:'tax-calculator.html'},
+    {name:'年龄计算器',desc:'精确计算年龄、生肖、星座',icon:'🎂',cat:'生活',color:'#ec4899',file:'age-calculator.html'},
+    {name:'日期计算器',desc:'日期差值、加减天数、倒计时',icon:'📅',cat:'生活',color:'#6366f1',file:'date-calculator.html'},
+    {name:'单位换算',desc:'长度/重量/温度/面积/存储换算',icon:'📐',cat:'生活',color:'#0ea5e9',file:'unit-converter.html'},
+    {name:'随机抽奖',desc:'随机数、随机抽签、摇骰子',icon:'🎲',cat:'生活',color:'#f43f5e',file:'random-generator.html'},
+    {name:'记账本',desc:'记录收支，分类统计，图表展示',icon:'📒',cat:'生活',color:'#10b981',file:'expense-tracker.html'},
+    {name:'番茄钟',desc:'专注计时器，提高工作效率',icon:'🍅',cat:'生活',color:'#ef4444',file:'pomodoro.html'},
+    {name:'在线记事本',desc:'自动保存的云记事本',icon:'📋',cat:'生活',color:'#6366f1',file:'notepad.html'},
+
+    // 媒体类
+    {name:'在线录音',desc:'浏览器录音，波形显示，下载音频',icon:'🎙️',cat:'媒体',color:'#ef4444',file:'audio-recorder.html'},
+    {name:'屏幕录制',desc:'录制屏幕操作，无需安装软件',icon:'🖥️',cat:'媒体',color:'#6366f1',file:'screen-recorder.html'},
+    {name:'打字测速',desc:'测试打字速度和准确率',icon:'⌨️',cat:'媒体',color:'#0ea5e9',file:'typing-test.html'},
+    {name:'在线白板',desc:'自由画板，支持形状和文字',icon:'🎨',cat:'媒体',color:'#10b981',file:'whiteboard.html'},
+  ];
+
+  const CATS=['全部','图片','文本','开发','生活','媒体'];
+  let currentCat='全部';
+
+  function renderTabs(){
+    document.getElementById('catTabs').innerHTML=CATS.map(c=>`<button class="cat-tab${c===currentCat?' active':''}" onclick="setCat('${c}',this)">${c}${c!=='全部'?' ('+TOOLS.filter(t=>t.cat===c).length+')':''}</button>`).join('');
+  }
+
+  function setCat(c,btn){
+    currentCat=c;
+    document.querySelectorAll('.cat-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    filterTools();
+  }
+
+  function filterTools(){
+    const q=document.getElementById('searchInput').value.toLowerCase();
+    const filtered=TOOLS.filter(t=>{
+      const matchCat=currentCat==='全部'||t.cat===currentCat;
+      const matchQ=!q||t.name.toLowerCase().includes(q)||t.desc.toLowerCase().includes(q)||t.cat.toLowerCase().includes(q);
+      return matchCat&&matchQ;
+    });
+    renderTools(filtered);
+  }
+
+  function renderTools(list){
+    document.getElementById('toolCount').textContent=list.length;
+    document.getElementById('toolsGrid').innerHTML=list.map(t=>`<a class="tool-card" href="tools/${t.file}"><div class="tc-icon" style="background:${t.color}12;color:${t.color}">${t.icon}</div><div class="tc-name">${t.name}</div><div class="tc-desc">${t.desc}</div><span class="tc-tag">${t.cat}</span></a>`).join('');
+  }
+
+  renderTabs();
+  filterTools();
+  </script>
+</body>
+</html>

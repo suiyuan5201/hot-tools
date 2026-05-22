@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>代码格式化 - 免费在线工具</title>
+  <meta name="description" content="免费在线代码格式化工具，支持JSON、HTML、CSS、JavaScript代码美化和压缩">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page" style="max-width:1000px">
+    <h1>💻 代码格式化</h1>
+    <p class="subtitle">格式化JSON/HTML/CSS/JS代码</p>
+    <div class="options-row">
+      <span class="option-label">语言：</span>
+      <select id="lang" class="option-select"><option value="json">JSON</option><option value="html">HTML</option><option value="css">CSS</option><option value="js">JavaScript</option></select>
+      <span class="option-label">缩进：</span>
+      <select id="indent" class="option-select"><option value="2">2空格</option><option value="4">4空格</option><option value="tab">Tab</option></select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+      <div><h3 style="font-size:14px;margin-bottom:8px;color:var(--text-light)">输入代码</h3><textarea class="input" id="codeIn" rows="18" style="font-family:monospace;font-size:13px" placeholder="粘贴代码..."></textarea></div>
+      <div><h3 style="font-size:14px;margin-bottom:8px;color:var(--text-light)">格式化结果</h3><textarea class="input" id="codeOut" rows="18" readonly style="font-family:monospace;font-size:13px;background:#f8fafc"></textarea></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" onclick="format()">格式化</button>
+      <button class="btn btn-outline" onclick="minify()">压缩</button>
+      <button class="btn btn-outline" onclick="copyToClipboard(document.getElementById('codeOut').value)">复制结果</button>
+    </div>
+    <div id="error" style="color:#ef4444;font-size:13px;text-align:center"></div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function getIndent(){const v=document.getElementById('indent').value;return v==='tab'?'\t':' '.repeat(+v);}
+  function format(){
+    const lang=document.getElementById('lang').value;
+    const code=document.getElementById('codeIn').value;
+    const err=document.getElementById('error');err.textContent='';
+    try{
+      let result='';
+      if(lang==='json'){result=JSON.stringify(JSON.parse(code),null,getIndent());}
+      else if(lang==='html'){result=formatHTML(code);}
+      else if(lang==='css'){result=formatCSS(code);}
+      else{result=formatJS(code);}
+      document.getElementById('codeOut').value=result;
+    }catch(e){err.textContent='格式化错误: '+e.message;}
+  }
+  function minify(){
+    const lang=document.getElementById('lang').value;
+    const code=document.getElementById('codeIn').value;
+    try{
+      let result='';
+      if(lang==='json'){result=JSON.stringify(JSON.parse(code));}
+      else{result=code.replace(/\n/g,'').replace(/\s{2,}/g,' ').replace(/\s*([{}:;,])\s*/g,'$1');}
+      document.getElementById('codeOut').value=result;
+    }catch(e){document.getElementById('error').textContent='压缩错误: '+e.message;}
+  }
+  function formatHTML(html){
+    const ind=getIndent();let result='',level=0;
+    const tokens=html.replace(/>\s*</g,'>\n<').split('\n');
+    tokens.forEach(line=>{
+      line=line.trim();if(!line)return;
+      if(line.match(/^<\//)){ level--; }
+      result+=ind.repeat(Math.max(0,level))+line+'\n';
+      if(line.match(/^<[^/!][^>]*[^/]>$/)&&!line.match(/^<(img|br|hr|input|meta|link)/i)){level++;}
+    });
+    return result.trim();
+  }
+  function formatCSS(css){
+    const ind=getIndent();
+    return css.replace(/\s*\{\s*/g,' {\n'+ind).replace(/\s*\}\s*/g,'\n}\n').replace(/;\s*/g,';\n'+ind).replace(new RegExp(ind+'$','gm'),'').trim();
+  }
+  function formatJS(js){
+    const ind=getIndent();let result='',level=0;
+    const lines=js.replace(/([{;])/g,'$1\n').replace(/\}/g,'\n}').split('\n');
+    lines.forEach(line=>{
+      line=line.trim();if(!line)return;
+      if(line.startsWith('}'))level--;
+      result+=ind.repeat(Math.max(0,level))+line+'\n';
+      if(line.endsWith('{'))level++;
+    });
+    return result.trim();
+  }
+  </script>
+</body>
+</html>

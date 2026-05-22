@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>图片转Base64 - 免费在线工具</title>
+  <meta name="description" content="免费在线图片转Base64编码工具，支持图片和Base64互相转换，一键复制">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🔤 图片转Base64</h1>
+    <p class="subtitle">图片与Base64编码互相转换</p>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(0)">图片 → Base64</div>
+      <div class="tab" onclick="switchTab(1)">Base64 → 图片</div>
+    </div>
+    <div id="tab0">
+      <div class="upload-area" onclick="document.getElementById('fi').click()">
+        <div class="icon">📁</div><p>点击上传图片</p>
+        <input type="file" id="fi" accept="image/*">
+      </div>
+      <div id="result0" style="display:none">
+        <div class="info-bar"><span class="info-item" id="sizeInfo"></span></div>
+        <textarea class="input" id="b64out" rows="8" readonly style="font-size:12px;word-break:break-all"></textarea>
+        <div class="btn-group">
+          <button class="btn" onclick="copyToClipboard(document.getElementById('b64out').value)">复制Base64</button>
+          <button class="btn btn-outline" onclick="copyToClipboard(document.getElementById('b64out').value.replace(/^data:[^;]+;base64,/,''))">仅复制编码</button>
+        </div>
+      </div>
+    </div>
+    <div id="tab1" style="display:none">
+      <textarea class="input" id="b64in" rows="6" placeholder="粘贴Base64字符串（可包含或不包含data:image前缀）"></textarea>
+      <div class="btn-group"><button class="btn" onclick="decode()">转换为图片</button></div>
+      <div id="result1" style="text-align:center;margin-top:15px"></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function switchTab(i){
+    document.querySelectorAll('.tab').forEach((t,idx)=>{t.classList.toggle('active',idx===i)});
+    document.getElementById('tab0').style.display=i===0?'':'none';
+    document.getElementById('tab1').style.display=i===1?'':'none';
+  }
+  document.getElementById('fi').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{
+      document.getElementById('b64out').value=ev.target.result;
+      document.getElementById('sizeInfo').textContent='原始: '+formatBytes(f.size)+' | Base64: '+formatBytes(ev.target.result.length);
+      document.getElementById('result0').style.display='block';
+    };r.readAsDataURL(f);
+  };
+  function decode(){
+    let val=document.getElementById('b64in').value.trim();
+    if(!val)return showToast('请输入Base64');
+    if(!val.startsWith('data:'))val='data:image/png;base64,'+val;
+    const img=new Image();
+    img.onload=()=>{
+      img.style.maxWidth='100%';img.style.borderRadius='8px';
+      const div=document.getElementById('result1');
+      div.innerHTML='';div.appendChild(img);
+      const btn=document.createElement('button');btn.className='btn';btn.style.marginTop='15px';
+      btn.textContent='下载图片';btn.onclick=()=>{const a=document.createElement('a');a.href=val;a.download='decoded.png';a.click()};
+      div.appendChild(btn);
+    };
+    img.onerror=()=>showToast('无效的Base64图片数据');
+    img.src=val;
+  }
+  </script>
+</body>
+</html>

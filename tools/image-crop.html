@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>在线图片裁切 - 免费在线工具</title>
+  <meta name="description" content="免费在线图片裁切工具，支持自由裁切和固定比例裁切，1:1、4:3、16:9等多种比例">
+  <meta name="keywords" content="图片裁切,在线裁切,图片剪裁,裁剪图片">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>✂️ 图片裁切</h1>
+    <p class="subtitle">自由裁切或按比例裁切图片</p>
+    <div class="upload-area" id="drop" onclick="document.getElementById('fi').click()">
+      <div class="icon">📁</div><p>点击或拖拽上传图片</p>
+      <input type="file" id="fi" accept="image/*">
+    </div>
+    <div id="editor" style="display:none">
+      <div class="options-row">
+        <span class="option-label">比例：</span>
+        <button class="btn btn-sm btn-outline active" onclick="setRatio(0,this)">自由</button>
+        <button class="btn btn-sm btn-outline" onclick="setRatio(1,this)">1:1</button>
+        <button class="btn btn-sm btn-outline" onclick="setRatio(4/3,this)">4:3</button>
+        <button class="btn btn-sm btn-outline" onclick="setRatio(16/9,this)">16:9</button>
+        <button class="btn btn-sm btn-outline" onclick="setRatio(3/2,this)">3:2</button>
+        <button class="btn btn-sm btn-outline" onclick="setRatio(9/16,this)">9:16</button>
+      </div>
+      <div style="position:relative;display:inline-block;margin:0 auto;display:flex;justify-content:center">
+        <canvas id="cv" style="cursor:crosshair;max-width:100%;border:1px solid var(--border);border-radius:8px"></canvas>
+      </div>
+      <div class="info-bar" id="info"></div>
+      <div class="btn-group">
+        <button class="btn" onclick="doCrop()">裁切并下载</button>
+        <button class="btn btn-outline" onclick="resetCrop()">重置</button>
+      </div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let img,cv,ctx,ratio=0,crop={x:0,y:0,w:0,h:0},dragging=false,startX,startY,scale=1;
+  const fi=document.getElementById('fi'),drop=document.getElementById('drop');
+  cv=document.getElementById('cv');ctx=cv.getContext('2d');
+
+  drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('dragover')});
+  drop.addEventListener('dragleave',()=>drop.classList.remove('dragover'));
+  drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('dragover');loadFile(e.dataTransfer.files[0])});
+  fi.addEventListener('change',e=>loadFile(e.target.files[0]));
+
+  function loadFile(f){
+    if(!f||!f.type.startsWith('image/'))return;
+    const r=new FileReader();
+    r.onload=e=>{
+      img=new Image();
+      img.onload=()=>{
+        const maxW=Math.min(800,window.innerWidth-60);
+        scale=img.width>maxW?maxW/img.width:1;
+        cv.width=img.width*scale;cv.height=img.height*scale;
+        crop={x:0,y:0,w:cv.width,h:cv.height};
+        drop.style.display='none';
+        document.getElementById('editor').style.display='block';
+        draw();
+      };
+      img.src=e.target.result;
+    };
+    r.readAsDataURL(f);
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.drawImage(img,0,0,cv.width,cv.height);
+    // dim outside
+    ctx.fillStyle='rgba(0,0,0,0.5)';
+    ctx.fillRect(0,0,cv.width,crop.y);
+    ctx.fillRect(0,crop.y+crop.h,cv.width,cv.height-crop.y-crop.h);
+    ctx.fillRect(0,crop.y,crop.x,crop.h);
+    ctx.fillRect(crop.x+crop.w,crop.y,cv.width-crop.x-crop.w,crop.h);
+    // border
+    ctx.strokeStyle='#6366f1';ctx.lineWidth=2;
+    ctx.strokeRect(crop.x,crop.y,crop.w,crop.h);
+    // grid lines
+    ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=1;
+    for(let i=1;i<3;i++){
+      ctx.beginPath();ctx.moveTo(crop.x+crop.w*i/3,crop.y);ctx.lineTo(crop.x+crop.w*i/3,crop.y+crop.h);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(crop.x,crop.y+crop.h*i/3);ctx.lineTo(crop.x+crop.w,crop.y+crop.h*i/3);ctx.stroke();
+    }
+    updateInfo();
+  }
+
+  function updateInfo(){
+    const rw=Math.round(crop.w/scale),rh=Math.round(crop.h/scale);
+    document.getElementById('info').innerHTML=`<span class="info-item">裁切区域: ${rw} × ${rh} px</span><span class="info-item">原图: ${img.width} × ${img.height} px</span>`;
+  }
+
+  cv.addEventListener('mousedown',e=>{
+    const r=cv.getBoundingClientRect();
+    startX=e.clientX-r.left;startY=e.clientY-r.top;
+    crop.x=startX;crop.y=startY;crop.w=0;crop.h=0;
+    dragging=true;
+  });
+  cv.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    const r=cv.getBoundingClientRect();
+    let mx=e.clientX-r.left,my=e.clientY-r.top;
+    mx=Math.max(0,Math.min(cv.width,mx));
+    my=Math.max(0,Math.min(cv.height,my));
+    let w=mx-startX,h=my-startY;
+    if(ratio>0){h=Math.abs(w)/ratio*(w*h<0?-1:1);}
+    crop.w=w;crop.h=h;
+    // normalize
+    let cx=crop.x,cy=crop.y,cw=crop.w,ch=crop.h;
+    if(cw<0){cx+=cw;cw=-cw;}
+    if(ch<0){cy+=ch;ch=-ch;}
+    crop={x:cx,y:cy,w:cw,h:ch};
+    crop.x=startX;crop.y=startY;crop.w=w;crop.h=h;
+    draw();
+  });
+  cv.addEventListener('mouseup',()=>{
+    dragging=false;
+    // normalize
+    if(crop.w<0){crop.x+=crop.w;crop.w=-crop.w;}
+    if(crop.h<0){crop.y+=crop.h;crop.h=-crop.h;}
+    draw();
+  });
+
+  function setRatio(r,btn){
+    ratio=r;
+    document.querySelectorAll('.options-row .btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    resetCrop();
+  }
+
+  function resetCrop(){
+    if(ratio>0){
+      const cw=cv.width*0.8,ch=cw/ratio;
+      crop={x:(cv.width-cw)/2,y:(cv.height-ch)/2,w:cw,h:Math.min(ch,cv.height*0.9)};
+    }else{
+      crop={x:0,y:0,w:cv.width,h:cv.height};
+    }
+    draw();
+  }
+
+  function doCrop(){
+    const out=document.createElement('canvas');
+    const sx=crop.x/scale,sy=crop.y/scale,sw=crop.w/scale,sh=crop.h/scale;
+    out.width=Math.round(sw);out.height=Math.round(sh);
+    out.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,out.width,out.height);
+    out.toBlob(b=>downloadBlob(b,'cropped.png'),'image/png');
+    showToast('裁切完成！');
+  }
+  </script>
+</body>
+</html>

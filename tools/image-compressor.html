@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>在线图片压缩 - 免费在线工具</title>
+  <meta name="description" content="免费在线图片压缩工具，支持JPG/PNG/WebP格式，可调压缩质量，批量处理，浏览器本地完成">
+  <meta name="keywords" content="图片压缩,在线压缩,图片优化,减小图片大小">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回工具箱</a></nav>
+  <div class="tool-page">
+    <h1>🗜️ 图片压缩</h1>
+    <p class="subtitle">在线压缩图片大小，支持JPG/PNG/WebP，保护隐私</p>
+    <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div class="icon">📁</div>
+      <p>点击或拖拽上传图片（支持多张）</p>
+      <input type="file" id="fileInput" accept="image/*" multiple>
+    </div>
+    <div class="options-row">
+      <span class="option-label">压缩质量：</span>
+      <input type="range" id="quality" min="10" max="100" value="70" style="width:200px;accent-color:var(--primary)">
+      <span id="qVal">70%</span>
+      <span class="option-label" style="margin-left:20px">格式：</span>
+      <select id="fmt" class="option-select"><option value="image/jpeg">JPG</option><option value="image/webp">WebP</option><option value="image/png">PNG</option></select>
+    </div>
+    <div id="results"></div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  const dropZone=document.getElementById('dropZone'),fileInput=document.getElementById('fileInput'),qualitySlider=document.getElementById('quality'),qVal=document.getElementById('qVal');
+  qualitySlider.oninput=()=>qVal.textContent=qualitySlider.value+'%';
+  dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover')});
+  dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('dragover');handleFiles(e.dataTransfer.files)});
+  fileInput.addEventListener('change',e=>handleFiles(e.target.files));
+
+  function handleFiles(files){
+    [...files].forEach(f=>{if(f.type.startsWith('image/'))compressFile(f)});
+  }
+
+  function compressFile(file){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        canvas.width=img.width;canvas.height=img.height;
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0);
+        const fmt=document.getElementById('fmt').value;
+        const q=qualitySlider.value/100;
+        canvas.toBlob(blob=>{
+          const ratio=((1-blob.size/file.size)*100).toFixed(1);
+          const div=document.createElement('div');
+          div.className='preview-area';
+          div.style.marginBottom='15px';
+          div.innerHTML=`<div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap">
+            <img src="${e.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:8px">
+            <div style="flex:1;min-width:200px">
+              <div style="font-weight:600;margin-bottom:4px">${file.name}</div>
+              <div style="font-size:13px;color:var(--text-light)">${img.width}×${img.height} | 原始: ${formatBytes(file.size)} → 压缩后: ${formatBytes(blob.size)}</div>
+              <div style="font-size:13px;color:${ratio>0?'#10b981':'#ef4444'};margin-top:2px">${ratio>0?'减小':'增大'} ${Math.abs(ratio)}%</div>
+            </div>
+            <button class="btn btn-sm" onclick="downloadBlob(this.blob,'compressed_${file.name}')">下载</button>
+          </div>`;
+          div.querySelector('button').blob=blob;
+          document.getElementById('results').prepend(div);
+        },fmt,q);
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>截图美化 - 免费在线工具</title>
+  <meta name="description" content="免费在线截图美化工具，给截图添加渐变背景、圆角、阴影效果，适合社交媒体分享">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>📸 截图美化</h1>
+    <p class="subtitle">给截图添加精美背景、圆角、阴影效果</p>
+    <div class="upload-area" onclick="document.getElementById('fi').click()">
+      <div class="icon">📁</div><p>点击上传截图</p>
+      <input type="file" id="fi" accept="image/*">
+    </div>
+    <div id="editor" style="display:none">
+      <div class="preview-area" style="margin-bottom:15px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+          <div>
+            <label>背景：</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px" id="bgPresets"></div>
+          </div>
+          <div>
+            <label>圆角: <span id="rVal">12</span>px</label>
+            <input type="range" id="radius" min="0" max="40" value="12" oninput="render()" style="width:100%">
+            <label>内边距: <span id="pVal">40</span>px</label>
+            <input type="range" id="padding" min="10" max="100" value="40" oninput="render()" style="width:100%">
+            <label>阴影: <span id="sVal">20</span></label>
+            <input type="range" id="shadow" min="0" max="50" value="20" oninput="render()" style="width:100%">
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center"><canvas id="cv" style="max-width:100%;border-radius:8px"></canvas></div>
+      <div class="btn-group"><button class="btn" onclick="dl()">下载美化图</button></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let img;
+  const BGS=[
+    {name:'紫蓝',colors:['#667eea','#764ba2']},
+    {name:'橙红',colors:['#f093fb','#f5576c']},
+    {name:'青绿',colors:['#4facfe','#00f2fe']},
+    {name:'暖阳',colors:['#fa709a','#fee140']},
+    {name:'森林',colors:['#38ef7d','#11998e']},
+    {name:'深邃',colors:['#0f2027','#2c5364']},
+    {name:'粉紫',colors:['#a18cd1','#fbc2eb']},
+    {name:'蓝天',colors:['#89f7fe','#66a6ff']},
+  ];
+  let curBg=BGS[0];
+
+  document.getElementById('fi').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{
+      img=new Image();img.onload=()=>{
+        document.querySelector('.upload-area').style.display='none';
+        document.getElementById('editor').style.display='block';
+        renderBgPresets();render();
+      };img.src=ev.target.result;
+    };r.readAsDataURL(f);
+  };
+
+  function renderBgPresets(){
+    document.getElementById('bgPresets').innerHTML=BGS.map((b,i)=>`<div onclick="setBg(${i})" style="width:32px;height:32px;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,${b.colors[0]},${b.colors[1]});border:2px solid ${b===curBg?'var(--primary)':'transparent'}"></div>`).join('');
+  }
+  function setBg(i){curBg=BGS[i];renderBgPresets();render();}
+
+  function render(){
+    const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+    const pad=+document.getElementById('padding').value;
+    const rad=+document.getElementById('radius').value;
+    const shd=+document.getElementById('shadow').value;
+    document.getElementById('rVal').textContent=rad;
+    document.getElementById('pVal').textContent=pad;
+    document.getElementById('sVal').textContent=shd;
+
+    const maxW=Math.min(800,window.innerWidth-60);
+    const totalW=img.width+pad*2,totalH=img.height+pad*2;
+    const scale=totalW>maxW?maxW/totalW:1;
+    cv.width=totalW*scale;cv.height=totalH*scale;
+
+    // bg gradient
+    const grad=ctx.createLinearGradient(0,0,cv.width,cv.height);
+    grad.addColorStop(0,curBg.colors[0]);grad.addColorStop(1,curBg.colors[1]);
+    ctx.fillStyle=grad;ctx.fillRect(0,0,cv.width,cv.height);
+
+    // shadow
+    const ix=pad*scale,iy=pad*scale,iw=img.width*scale,ih=img.height*scale;
+    if(shd>0){
+      ctx.shadowColor='rgba(0,0,0,0.3)';ctx.shadowBlur=shd*scale;ctx.shadowOffsetY=shd*scale/3;
+      ctx.fillStyle='#fff';
+      roundRect(ctx,ix,iy,iw,ih,rad*scale);ctx.fill();
+      ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+    }
+
+    // clip and draw image
+    ctx.save();
+    roundRect(ctx,ix,iy,iw,ih,rad*scale);ctx.clip();
+    ctx.drawImage(img,ix,iy,iw,ih);
+    ctx.restore();
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+    ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+    ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+  }
+
+  function dl(){
+    const pad=+document.getElementById('padding').value;
+    const rad=+document.getElementById('radius').value;
+    const shd=+document.getElementById('shadow').value;
+    const c=document.createElement('canvas');
+    c.width=img.width+pad*2;c.height=img.height+pad*2;
+    const x=c.getContext('2d');
+    const grad=x.createLinearGradient(0,0,c.width,c.height);
+    grad.addColorStop(0,curBg.colors[0]);grad.addColorStop(1,curBg.colors[1]);
+    x.fillStyle=grad;x.fillRect(0,0,c.width,c.height);
+    if(shd>0){x.shadowColor='rgba(0,0,0,0.3)';x.shadowBlur=shd;x.shadowOffsetY=shd/3;x.fillStyle='#fff';roundRect(x,pad,pad,img.width,img.height,rad);x.fill();x.shadowColor='transparent';x.shadowBlur=0;x.shadowOffsetY=0;}
+    x.save();roundRect(x,pad,pad,img.width,img.height,rad);x.clip();
+    x.drawImage(img,pad,pad);x.restore();
+    c.toBlob(b=>downloadBlob(b,'beautified.png'),'image/png');showToast('下载成功！');
+  }
+  </script>
+</body>
+</html>

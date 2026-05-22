@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>文本对比 - 免费在线工具</title>
+  <meta name="description" content="免费在线文本对比工具，对比两段文本差异，高亮显示增删改内容">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>📄 文本对比</h1>
+    <p class="subtitle">对比两段文本的差异，高亮显示</p>
+    <div class="compare-row">
+      <div class="compare-box"><h3>原始文本</h3><textarea class="input" id="t1" rows="10" placeholder="粘贴原始文本..."></textarea></div>
+      <div class="compare-box"><h3>修改文本</h3><textarea class="input" id="t2" rows="10" placeholder="粘贴修改后文本..."></textarea></div>
+    </div>
+    <div class="btn-group"><button class="btn" onclick="compare()">开始对比</button><button class="btn btn-outline" onclick="document.getElementById('t1').value=document.getElementById('t2').value=''">清空</button></div>
+    <div id="result" style="display:none">
+      <div class="info-bar" id="stats"></div>
+      <div class="preview-area"><div id="diff" style="font-family:monospace;font-size:13px;line-height:1.8"></div></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function compare(){
+    const a=document.getElementById('t1').value.split('\n'),b=document.getElementById('t2').value.split('\n');
+    const n=a.length,m=b.length;
+    // LCS DP
+    const dp=Array.from({length:n+1},()=>Array(m+1).fill(0));
+    for(let i=1;i<=n;i++)for(let j=1;j<=m;j++)dp[i][j]=a[i-1]===b[j-1]?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]);
+    // backtrack
+    const result=[];let i=n,j=m;
+    while(i>0||j>0){
+      if(i>0&&j>0&&a[i-1]===b[j-1]){result.unshift({type:'same',text:a[i-1]});i--;j--;}
+      else if(j>0&&(i===0||dp[i][j-1]>=dp[i-1][j])){result.unshift({type:'add',text:b[j-1]});j--;}
+      else{result.unshift({type:'del',text:a[i-1]});i--;}
+    }
+    let adds=0,dels=0;
+    const html=result.map(r=>{
+      if(r.type==='add'){adds++;return`<div style="background:#dcfce7;color:#166534;padding:3px 10px;border-left:3px solid #22c55e">+ ${esc(r.text)}</div>`;}
+      if(r.type==='del'){dels++;return`<div style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-left:3px solid #ef4444">- ${esc(r.text)}</div>`;}
+      return`<div style="padding:3px 10px;color:var(--text-light)">  ${esc(r.text)}</div>`;
+    }).join('');
+    document.getElementById('diff').innerHTML=html;
+    document.getElementById('stats').innerHTML=`<span class="info-item" style="background:#dcfce7;color:#166534">+ 新增 ${adds} 行</span><span class="info-item" style="background:#fee2e2;color:#991b1b">- 删除 ${dels} 行</span><span class="info-item">共 ${result.length} 行</span>`;
+    document.getElementById('result').style.display='block';
+  }
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  </script>
+</body>
+</html>

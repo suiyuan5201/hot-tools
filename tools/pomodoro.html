@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>番茄钟 - 免费在线工具</title>
+  <meta name="description" content="免费在线番茄钟，25分钟专注工作+5分钟休息，提高工作效率，圆形进度条">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .timer-circle{width:260px;height:260px;border-radius:50%;margin:20px auto;position:relative;display:flex;align-items:center;justify-content:center;flex-direction:column}
+    .timer-circle svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+    .timer-circle .time{font-size:3em;font-weight:700;color:var(--primary);z-index:1}
+    .timer-circle .label{font-size:14px;color:var(--text-light);z-index:1}
+  </style>
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🍅 番茄钟</h1>
+    <p class="subtitle">专注计时，提高工作效率</p>
+    <div class="preview-area" style="text-align:center">
+      <div class="tabs" style="max-width:300px;margin:0 auto 15px">
+        <div class="tab active" onclick="setMode('work')">工作 25分</div>
+        <div class="tab" onclick="setMode('break')">休息 5分</div>
+        <div class="tab" onclick="setMode('long')">长休 15分</div>
+      </div>
+      <div class="timer-circle">
+        <svg width="260" height="260"><circle cx="130" cy="130" r="120" stroke="#f1f5f9" stroke-width="8" fill="none"/><circle id="progress" cx="130" cy="130" r="120" stroke="var(--primary)" stroke-width="8" fill="none" stroke-linecap="round" stroke-dasharray="753.98" stroke-dashoffset="0"/></svg>
+        <div class="time" id="display">25:00</div>
+        <div class="label" id="modeLabel">工作中</div>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="startBtn" onclick="toggle()">▶ 开始</button>
+        <button class="btn btn-outline" onclick="reset()">↺ 重置</button>
+      </div>
+      <div style="margin-top:20px">
+        <div style="font-size:14px;color:var(--text-light)">今日完成：<span id="count" style="font-weight:700;color:var(--primary)">0</span> 个番茄</div>
+      </div>
+      <div style="margin-top:15px;font-size:13px;color:var(--text-light)">
+        自定义：工作<input type="number" id="customWork" value="25" style="width:50px;padding:3px;border:1px solid var(--border);border-radius:4px;text-align:center">分 休息<input type="number" id="customBreak" value="5" style="width:50px;padding:3px;border:1px solid var(--border);border-radius:4px;text-align:center">分
+      </div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let mode='work',running=false,timer=null,totalSec=25*60,remainSec=25*60;
+  const today=new Date().toDateString();
+  let completed=+(localStorage.getItem('pomodoro_'+today)||0);
+  document.getElementById('count').textContent=completed;
+
+  const MODES={work:{label:'工作中',min:25},break:{label:'休息中',min:5},long:{label:'长休息',min:15}};
+  const circumference=2*Math.PI*120;
+
+  function setMode(m){
+    mode=m;running=false;clearInterval(timer);
+    document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['work','break','long'][i]===m));
+    let min=MODES[m].min;
+    if(m==='work')min=+document.getElementById('customWork').value||25;
+    if(m==='break')min=+document.getElementById('customBreak').value||5;
+    totalSec=min*60;remainSec=totalSec;
+    document.getElementById('modeLabel').textContent=MODES[m].label;
+    document.getElementById('startBtn').textContent='▶ 开始';
+    updateDisplay();
+  }
+
+  function toggle(){
+    if(running){running=false;clearInterval(timer);document.getElementById('startBtn').textContent='▶ 继续';}
+    else{running=true;document.getElementById('startBtn').textContent='⏸ 暂停';timer=setInterval(tick,1000);}
+  }
+
+  function tick(){
+    remainSec--;
+    if(remainSec<=0){
+      clearInterval(timer);running=false;
+      document.getElementById('startBtn').textContent='▶ 开始';
+      if(mode==='work'){completed++;localStorage.setItem('pomodoro_'+today,completed);document.getElementById('count').textContent=completed;}
+      playBeep();
+      showToast(mode==='work'?'工作完成！休息一下吧':'休息结束！继续加油');
+      remainSec=0;
+    }
+    updateDisplay();
+  }
+
+  function reset(){running=false;clearInterval(timer);setMode(mode);}
+
+  function updateDisplay(){
+    const m=Math.floor(remainSec/60),s=remainSec%60;
+    document.getElementById('display').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    const offset=circumference*(1-remainSec/totalSec);
+    document.getElementById('progress').style.strokeDashoffset=offset;
+    document.title=(running?'⏱ ':'')+document.getElementById('display').textContent+' - 番茄钟';
+  }
+
+  function playBeep(){
+    try{
+      const ctx=new(window.AudioContext||window.webkitAudioContext)();
+      [0,0.2,0.4].forEach(t=>{
+        const osc=ctx.createOscillator();const gain=ctx.createGain();
+        osc.connect(gain);gain.connect(ctx.destination);
+        osc.frequency.value=800;gain.gain.value=0.3;
+        osc.start(ctx.currentTime+t);osc.stop(ctx.currentTime+t+0.15);
+      });
+    }catch(e){}
+  }
+  updateDisplay();
+  </script>
+</body>
+</html>

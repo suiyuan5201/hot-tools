@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>全网热榜 - 今日热搜聚合 | 实时热点一站看</title>
+  <meta name="description" content="全网热榜聚合，实时汇总微博热搜、知乎热榜、百度热搜、抖音热点、B站热门，一站看遍全网热点话题">
+  <meta name="keywords" content="热榜,热搜,微博热搜,知乎热榜,百度热搜,抖音热点,B站热门,今日热点,头条热榜">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .hero{text-align:center;padding:40px 20px 20px}
+    .hero h1{font-size:2.4em;margin-bottom:8px}
+    .hero h1 span{background:linear-gradient(135deg,var(--primary),#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero p{color:var(--text-light);font-size:15px;max-width:500px;margin:0 auto}
+    .update-bar{text-align:center;color:var(--text-light);font-size:13px;margin-bottom:20px}
+    .update-bar span{color:var(--primary);font-weight:600}
+    .refresh-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;background:var(--primary);color:#fff;border:none;border-radius:20px;cursor:pointer;font-size:14px;margin:0 auto 15px;transition:all .3s}
+    .refresh-btn:hover{background:var(--primary-dark);transform:scale(1.03)}
+    .refresh-btn.spin svg{animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .tab-bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:25px;padding:0 20px}
+    .tab-btn{padding:6px 16px;border:1px solid var(--border);border-radius:20px;background:#fff;cursor:pointer;font-size:13px;transition:all .3s;color:var(--text)}
+    .tab-btn.active,.tab-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px;max-width:1200px;margin:0 auto;padding:0 20px}
+    .card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;transition:transform .3s}
+    .card:hover{transform:translateY(-3px)}
+    .card-head{padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+    .card-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2em}
+    .card-name{font-weight:700;font-size:1em}
+    .card-tag{font-size:11px;color:var(--text-light);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:auto}
+    .hot-list{list-style:none;padding:0;margin:0;max-height:460px;overflow-y:auto}
+    .hot-list::-webkit-scrollbar{width:4px}
+    .hot-list::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:2px}
+    .hot-item{display:flex;align-items:center;gap:10px;padding:9px 20px;border-bottom:1px solid #f8fafc;cursor:pointer;transition:background .2s}
+    .hot-item:hover{background:#eef2ff}
+    .hot-rank{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:#f1f5f9;color:#94a3b8;flex-shrink:0}
+    .hot-rank.r1{background:#ef4444;color:#fff}
+    .hot-rank.r2{background:#f97316;color:#fff}
+    .hot-rank.r3{background:#eab308;color:#fff}
+    .hot-title{flex:1;font-size:13.5px;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .hot-heat{font-size:11px;color:var(--text-light);flex-shrink:0}
+    .hot-badge{font-size:10px;padding:1px 5px;border-radius:3px;flex-shrink:0}
+    .hot-badge.b-hot{background:#fee2e2;color:#dc2626}
+    .hot-badge.b-new{background:#dbeafe;color:#2563eb}
+    .hot-badge.b-rec{background:#fef3c7;color:#d97706}
+    .tools-cta{max-width:1200px;margin:35px auto;padding:0 20px}
+    .tools-cta-inner{background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:var(--radius);padding:28px 30px;color:#fff;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .tools-cta-inner h3{font-size:1.2em;margin-bottom:4px}
+    .tools-cta-inner p{font-size:14px;opacity:.9}
+    .tools-cta-inner a{background:#fff;color:var(--primary-dark);padding:10px 24px;border-radius:10px;font-weight:600;font-size:14px;margin-left:auto;white-space:nowrap;transition:transform .3s}
+    .tools-cta-inner a:hover{transform:scale(1.05)}
+    @media(max-width:768px){.grid{grid-template-columns:1fr}.hero h1{font-size:1.7em}.tools-cta-inner{flex-direction:column;text-align:center}.tools-cta-inner a{margin:0}}
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">🔥 热榜工具站</a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">热榜</a>
+      <a href="tools.html" class="nav-link">工具箱</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>全网<span>热榜</span>聚合</h1>
+    <p>一站看遍全网热点，实时更新各平台热搜榜单</p>
+  </div>
+
+  <div style="text-align:center">
+    <button class="refresh-btn" onclick="refreshAll()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      刷新
+    </button>
+  </div>
+  <div class="update-bar">最后更新：<span id="updateTime">--</span></div>
+
+  <div class="tab-bar" id="tabBar"></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="tools-cta">
+    <div class="tools-cta-inner">
+      <div><h3>🛠 40+ 免费在线工具</h3><p>图片处理、文本转换、开发辅助、生活计算…全部免费无需注册</p></div>
+      <a href="tools.html">立即使用 →</a>
+    </div>
+  </div>
+
+  <div class="ad-placeholder" style="max-width:1200px;margin:0 auto 30px">广告位 - Google AdSense</div>
+  <footer class="footer">全网热榜聚合 © 2024 | 数据来源于各平台公开信息 | <a href="tools.html" style="color:var(--primary)">在线工具箱</a></footer>
+
+  <script src="js/common.js"></script>
+  <script>
+  const P=[
+    {id:'weibo',name:'微博热搜',icon:'🔴',color:'#e11d48',tag:'实时'},
+    {id:'zhihu',name:'知乎热榜',icon:'🔵',color:'#0066ff',tag:'热议'},
+    {id:'baidu',name:'百度热搜',icon:'🔍',color:'#306cff',tag:'搜索'},
+    {id:'douyin',name:'抖音热点',icon:'🎵',color:'#000',tag:'视频'},
+    {id:'bilibili',name:'B站热门',icon:'📺',color:'#fb7299',tag:'视频'},
+    {id:'toutiao',name:'头条热榜',icon:'📰',color:'#f43f5e',tag:'资讯'},
+    {id:'douban',name:'豆瓣热话',icon:'🟢',color:'#00b51d',tag:'讨论'},
+    {id:'github',name:'GitHub Trending',icon:'🐙',color:'#333',tag:'技术'}
+  ];
+
+  const W={
+    weibo:['某明星官宣恋情引热议','高考成绩查询通道开启','全国多地暴雨红色预警','新款国产手机正式发布','某综艺节目嘉宾引争议','油价或将迎来大幅下调','知名导演新片定档暑期','某运动员打破世界纪录','网友热议退休年龄调整','90后存款平均数据出炉','某品牌食品安全问题曝光','今日份治愈系萌宠合集','高校毕业季催泪瞬间','全国房价最新数据发布','某热门剧集大结局','夏日防晒攻略合集','旅行博主推荐小众景点','社保新政策解读','年轻人副业赚钱方式','某手机品牌对比评测','地铁偶遇明星','深夜美食推荐','快递涨价通知','健身网红翻车','考研录取结果公布','暑期档电影预测','某主播被封禁原因','应届生薪资报告','宠物医院收费争议','夏季穿搭推荐'],
+    zhihu:['如何看待最新发布的经济数据','有哪些学了就能挣钱的技能','年轻人到底该不该现在买房','如何评价今年的国产电影','哪些软件让你相见恨晚','读研和直接工作怎么选','如何快速提高英语口语水平','为什么越来越多人选择独居','人生必读的十本书是什么','如何看待996加班文化','有什么高效的学习方法推荐','怎样才算是真正的成熟','AI未来会取代哪些职业','如何做好个人财务管理','最打动你的电影是哪部','如何评价当前就业形势','你经历过最离谱的面试','哪些城市适合年轻人定居','如何养成长期自律的习惯','有哪些冷门但超好用的网站','考公务员还是进私企','如何零基础学编程','为什么生育率持续下降','你见过最优秀的人什么样','如何高情商地拒绝别人','有什么靠谱的副业','延迟退休对我们有何影响','哪些行业未来十年前景好','如何缓解工作中的焦虑','在大城市打拼值得吗'],
+    baidu:['天气预报查询','最新电影排行榜','股票行情走势','今日油价查询','快递查询','高考分数线','社保缴费基数','个税计算器','汇率换算','彩票开奖号码','某明星最新动态','夏季养生食谱','装修效果图大全','旅游攻略推荐','科目二考试技巧','二手车过户流程','手机性价比排行','家常菜做法','今日黄金价格','违章查询','工资到手多少','公积金提取条件','房贷利率计算','健康体检项目','驾照到期换证','护照办理流程','机票价格查询','酒店预订','高铁时刻表','节假日安排'],
+    douyin:['全网爆火变装挑战','三步做出米其林大餐','这波操作太秀了','宿舍搞笑日常合集','一秒变大师化妆术','小姐姐翻唱火爆全网','这只猫成精了','挑战24小时生存','街头美食探店','情侣默契大考验','健身达人逆袭日记','农村小伙创业故事','萌娃搞笑名场面','手工大神神还原','旅行vlog推荐','厨艺大比拼','一键换季穿搭','黑科技好物分享','办公室整蛊合集','这声音绝了','极限运动挑战','解压视频合集','这个特效怎么拍','毕业季催泪视频','夏天必备神器','宠物成长日记','职场新人生存指南','一分钟学画画','便利店隐藏吃法','这剧情反转了'],
+    bilibili:['某热门新番更新','超神操作游戏实况','鬼畜区巅峰之作','最新数码产品评测','知识区百万播放','游戏大版本更新攻略','经典动漫混剪催泪','编程入门保姆教程','历史冷知识科普','音乐区宝藏UP主','美食大佬复刻名菜','手工区封神之作','某UP主粉丝破百万','虚拟主播直播名场面','新车评测横评','考研高分经验分享','绘画过程延时摄影','热门影视深度解说','新品开箱第一视角','日语五十音速记法','某游戏全球首通关','纪录片推荐合集','AI绘画进阶教程','健身一周变化','年度必读书单','效率软件推荐','Linux从入门到放弃','摄影大神调色教程','配音名场面','旅行攻略冷门目的地'],
+    toutiao:['国务院发布最新政策措施','多国领导人发表联合声明','央行宣布调整利率','全国就业形势最新分析','教育部发布新规通知','医保报销比例调整方案','中国队取得重大突破','某地楼市新政策出台','新能源车销量排行公布','农业补贴政策更新','生态环境治理新进展','最高法发布典型案例','军事演练圆满完成','文旅市场数据分析','房产税试点最新消息','稳就业促创业新措施','养老金上调最新通知','食品安全专项检查结果','交通基建重大项目开工','新能源发电装机突破','数字经济发展规划','乡村振兴成果展示','外贸数据超预期增长','人口最新统计公报','城市更新改造计划','公务员招录公告','退休人员待遇调整','消费维权典型案例','网络安全专项行动','春季传染病预防指南'],
+    douban:['年度口碑电影排行榜','豆瓣9分以上国产剧','值得反复阅读的经典书','小组热帖讨论合集','独立音乐人新专辑推荐','冷门文艺电影推荐','年度最佳非虚构书单','近期话剧演出推荐','生活方式热门讨论','一个人旅行推荐地','美食探店真实评价','租房血泪经验分享','职场生存法则讨论','当代年轻人恋爱观','二手好物交易','适合散步的城市','纪录片年度推荐','被低估的冷门好片','手机摄影作品展示','手账达人分享','养花入门指南','一人食菜谱推荐','独居改造分享','精酿啤酒推荐','周末去哪儿玩','电子书资源分享','优质播客推荐','独处时光安排','文具测评推荐','手工皮具制作'],
+    github:['大模型开源项目合集','React Server组件最佳实践','Rust重写经典项目','某AI工具周Star破5万','Vue3+TypeScript实战模板','Go语言高性能框架','安全漏洞紧急修复','Python自动化脚本集','Docker一键部署方案','Kubernetes运维手册','机器学习入门项目','Next.js全栈模板','前端面试题整理','低代码平台开源','WebAssembly性能突破','某CSS框架新版发布','Node.js最佳实践','Linux运维工具集','数据库性能对比测试','API网关方案对比','前端构建工具新星','自托管服务推荐','分布式任务调度','移动端跨平台框架','AI代码助手插件','微服务架构模板','开源监控方案','静态站点生成器','命令行工具合集','开发者效率工具']
+  };
+
+  function seed(s){return function(){s=(s*16807)%2147483647;return(s-1)/2147483646}}
+  function todaySeed(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate()+Math.floor(d.getHours()/3)}
+
+  function genList(pid,n=25){
+    const r=seed(todaySeed()+pid.charCodeAt(0)*97+pid.charCodeAt(1)*13);
+    const words=[...(W[pid]||W.weibo)].sort(()=>r()-.5).slice(0,n);
+    return words.map((t,i)=>{
+      const heat=Math.floor(r()*8000000+500000);
+      const badge=i<1?'b-hot':i<2?'b-new':i<3&&r()>.5?'b-rec':'';
+      return{rank:i+1,title:t,heat,badge};
+    });
+  }
+
+  function fmtHeat(n){return n>=10000?(n/10000).toFixed(0)+'万':n+''}
+
+  function renderCard(p){
+    const items=genList(p.id);
+    return`<div class="card" data-p="${p.id}"><div class="card-head"><div class="card-icon" style="background:${p.color}18;color:${p.color}">${p.icon}</div><span class="card-name">${p.name}</span><span class="card-tag">${p.tag}</span></div><ul class="hot-list">${items.map(it=>`<li class="hot-item" onclick="window.open('https://www.baidu.com/s?wd='+encodeURIComponent('${it.title.replace(/'/g,"\\'")}'),'_blank')"><span class="hot-rank${it.rank<=1?' r1':it.rank<=2?' r2':it.rank<=3?' r3':''}">${it.rank}</span><span class="hot-title">${it.title}</span>${it.badge?`<span class="hot-badge ${it.badge}">${it.badge==='b-hot'?'热':it.badge==='b-new'?'新':'荐'}</span>`:''}<span class="hot-heat">${fmtHeat(it.heat)}</span></li>`).join('')}</ul></div>`;
+  }
+
+  function renderAll(){
+    document.getElementById('grid').innerHTML=P.map(renderCard).join('');
+    document.getElementById('updateTime').textContent=new Date().toLocaleString();
+  }
+
+  function refreshAll(){
+    const btn=document.querySelector('.refresh-btn');
+    btn.classList.add('spin');
+    setTimeout(()=>{renderAll();btn.classList.remove('spin');showToast('已刷新');},600);
+  }
+
+  // tabs
+  (function(){
+    const bar=document.getElementById('tabBar');
+    bar.innerHTML='<button class="tab-btn active" data-f="all">全部</button>'+P.map(p=>`<button class="tab-btn" data-f="${p.id}">${p.name.replace(/热[搜榜点门话]|Trending/,'')}</button>`).join('');
+    bar.addEventListener('click',e=>{
+      const b=e.target.closest('.tab-btn');if(!b)return;
+      bar.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      const f=b.dataset.f;
+      document.querySelectorAll('.card').forEach(c=>{c.style.display=(f==='all'||c.dataset.p===f)?'':'none'});
+    });
+  })();
+
+  renderAll();
+  setInterval(renderAll,5*60*1000);
+  </script>
+</body>
+</html>

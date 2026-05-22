@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>图片马赛克 - 免费在线工具</title>
+  <meta name="description" content="免费在线图片马赛克工具，涂抹打码保护隐私，支持马赛克和模糊效果">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🔲 图片马赛克</h1>
+    <p class="subtitle">涂抹打码，保护隐私信息</p>
+    <div class="upload-area" onclick="document.getElementById('fi').click()">
+      <div class="icon">📁</div><p>点击上传图片</p>
+      <input type="file" id="fi" accept="image/*">
+    </div>
+    <div id="editor" style="display:none">
+      <div class="options-row">
+        <span class="option-label">大小：</span>
+        <button class="btn btn-sm btn-outline" onclick="setSize(8,this)">小</button>
+        <button class="btn btn-sm active" onclick="setSize(16,this)">中</button>
+        <button class="btn btn-sm btn-outline" onclick="setSize(30,this)">大</button>
+        <span class="option-label" style="margin-left:15px">画笔：</span>
+        <input type="range" id="brush" min="10" max="100" value="40" style="width:120px;accent-color:var(--primary)">
+      </div>
+      <p style="text-align:center;font-size:13px;color:var(--text-light);margin-bottom:10px">在图片上涂抹需要打码的区域</p>
+      <div style="text-align:center"><canvas id="cv" style="cursor:crosshair;max-width:100%;border-radius:8px;box-shadow:var(--shadow)"></canvas></div>
+      <div class="btn-group">
+        <button class="btn" onclick="dl()">下载</button>
+        <button class="btn btn-outline" onclick="reset()">重置</button>
+      </div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let img,cv,ctx,painting=false,mosaicSize=16,scale=1;
+  document.getElementById('fi').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{
+      img=new Image();img.onload=()=>{
+        cv=document.getElementById('cv');ctx=cv.getContext('2d');
+        const maxW=Math.min(750,window.innerWidth-60);
+        scale=img.width>maxW?maxW/img.width:1;
+        cv.width=img.width*scale;cv.height=img.height*scale;
+        ctx.drawImage(img,0,0,cv.width,cv.height);
+        document.querySelector('.upload-area').style.display='none';
+        document.getElementById('editor').style.display='block';
+      };img.src=ev.target.result;
+    };r.readAsDataURL(f);
+  };
+  function setSize(s,btn){mosaicSize=s;document.querySelectorAll('.options-row .btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  function mosaic(mx,my){
+    const brush=+document.getElementById('brush').value;
+    const x0=Math.max(0,mx-brush),y0=Math.max(0,my-brush);
+    const x1=Math.min(cv.width,mx+brush),y1=Math.min(cv.height,my+brush);
+    for(let y=y0;y<y1;y+=mosaicSize){
+      for(let x=x0;x<x1;x+=mosaicSize){
+        const dx=x-mx,dy=y-my;
+        if(dx*dx+dy*dy>brush*brush)continue;
+        const bw=Math.min(mosaicSize,cv.width-x),bh=Math.min(mosaicSize,cv.height-y);
+        const d=ctx.getImageData(x,y,bw,bh).data;
+        let tr=0,tg=0,tb=0,cnt=0;
+        for(let i=0;i<d.length;i+=4){tr+=d[i];tg+=d[i+1];tb+=d[i+2];cnt++;}
+        ctx.fillStyle=`rgb(${tr/cnt|0},${tg/cnt|0},${tb/cnt|0})`;
+        ctx.fillRect(x,y,bw,bh);
+      }
+    }
+  }
+  cv=document.getElementById('cv');
+  cv.addEventListener('mousedown',e=>{painting=true;const r=cv.getBoundingClientRect();mosaic(e.clientX-r.left,e.clientY-r.top);});
+  cv.addEventListener('mousemove',e=>{if(!painting)return;const r=cv.getBoundingClientRect();mosaic(e.clientX-r.left,e.clientY-r.top);});
+  cv.addEventListener('mouseup',()=>painting=false);
+  cv.addEventListener('mouseleave',()=>painting=false);
+  cv.addEventListener('touchstart',e=>{e.preventDefault();painting=true;const r=cv.getBoundingClientRect();const t=e.touches[0];mosaic(t.clientX-r.left,t.clientY-r.top);},{passive:false});
+  cv.addEventListener('touchmove',e=>{e.preventDefault();if(!painting)return;const r=cv.getBoundingClientRect();const t=e.touches[0];mosaic(t.clientX-r.left,t.clientY-r.top);},{passive:false});
+  cv.addEventListener('touchend',()=>painting=false);
+  function reset(){ctx.drawImage(img,0,0,cv.width,cv.height);}
+  function dl(){
+    const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+    const x=c.getContext('2d');
+    x.drawImage(cv,0,0,img.width,img.height);
+    c.toBlob(b=>downloadBlob(b,'mosaic.png'),'image/png');showToast('下载成功！');
+  }
+  </script>
+</body>
+</html>

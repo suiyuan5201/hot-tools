@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>图片旋转翻转 - 免费在线工具</title>
+  <meta name="description" content="免费在线图片旋转翻转工具，支持90度旋转、水平垂直翻转、自定义角度旋转">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🔄 图片旋转翻转</h1>
+    <p class="subtitle">旋转、翻转图片，支持任意角度</p>
+    <div class="upload-area" onclick="document.getElementById('fi').click()">
+      <div class="icon">📁</div><p>点击上传图片</p>
+      <input type="file" id="fi" accept="image/*">
+    </div>
+    <div id="editor" style="display:none">
+      <div class="btn-group">
+        <button class="btn btn-sm" onclick="rotate(-90)">↶ 左转90°</button>
+        <button class="btn btn-sm" onclick="rotate(90)">↷ 右转90°</button>
+        <button class="btn btn-sm btn-outline" onclick="flip('h')">↔ 水平翻转</button>
+        <button class="btn btn-sm btn-outline" onclick="flip('v')">↕ 垂直翻转</button>
+      </div>
+      <div class="slider-row" style="max-width:400px;margin:10px auto">
+        <label>角度:</label>
+        <input type="range" id="angle" min="-180" max="180" value="0" oninput="freeRotate()">
+        <span id="angleVal">0°</span>
+      </div>
+      <div style="text-align:center"><canvas id="cv" style="max-width:100%;border-radius:8px"></canvas></div>
+      <div class="btn-group"><button class="btn" onclick="download()">下载</button><button class="btn btn-outline" onclick="resetAll()">重置</button></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let img,totalAngle=0,flipH=false,flipV=false;
+  document.getElementById('fi').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{
+      img=new Image();img.onload=()=>{
+        document.querySelector('.upload-area').style.display='none';
+        document.getElementById('editor').style.display='block';
+        draw();
+      };img.src=ev.target.result;
+    };r.readAsDataURL(f);
+  };
+  function rotate(deg){totalAngle=(totalAngle+deg)%360;document.getElementById('angle').value=0;document.getElementById('angleVal').textContent='0°';draw();}
+  function flip(dir){if(dir==='h')flipH=!flipH;else flipV=!flipV;draw();}
+  function freeRotate(){document.getElementById('angleVal').textContent=document.getElementById('angle').value+'°';draw();}
+  function resetAll(){totalAngle=0;flipH=false;flipV=false;document.getElementById('angle').value=0;document.getElementById('angleVal').textContent='0°';draw();}
+  function draw(){
+    const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+    const free=+document.getElementById('angle').value;
+    const ang=(totalAngle+free)*Math.PI/180;
+    const sin=Math.abs(Math.sin(ang)),cos=Math.abs(Math.cos(ang));
+    const w=img.width*cos+img.height*sin,h=img.width*sin+img.height*cos;
+    const maxW=Math.min(700,window.innerWidth-60),s=w>maxW?maxW/w:1;
+    cv.width=w*s;cv.height=h*s;
+    ctx.save();ctx.translate(cv.width/2,cv.height/2);
+    ctx.rotate(ang);ctx.scale(flipH?-1:1,flipV?-1:1);
+    ctx.drawImage(img,-img.width*s/2,-img.height*s/2,img.width*s,img.height*s);
+    ctx.restore();
+  }
+  function download(){
+    const free=+document.getElementById('angle').value;
+    const ang=(totalAngle+free)*Math.PI/180;
+    const sin=Math.abs(Math.sin(ang)),cos=Math.abs(Math.cos(ang));
+    const w=img.width*cos+img.height*sin,h=img.width*sin+img.height*cos;
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const x=c.getContext('2d');x.translate(w/2,h/2);x.rotate(ang);x.scale(flipH?-1:1,flipV?-1:1);
+    x.drawImage(img,-img.width/2,-img.height/2);
+    c.toBlob(b=>downloadBlob(b,'rotated.png'),'image/png');showToast('下载成功！');
+  }
+  </script>
+</body>
+</html>

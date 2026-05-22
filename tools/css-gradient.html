@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>CSS渐变生成器 - 免费在线工具</title>
+  <meta name="description" content="免费在线CSS渐变生成器，可视化编辑线性渐变和径向渐变，生成CSS代码">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🌈 CSS渐变生成器</h1>
+    <p class="subtitle">可视化生成CSS渐变代码</p>
+    <div id="preview" style="width:100%;height:200px;border-radius:var(--radius);margin-bottom:20px;box-shadow:var(--shadow)"></div>
+    <div class="preview-area">
+      <div class="options-row">
+        <span class="option-label">类型：</span>
+        <button class="btn btn-sm active" id="btnLin" onclick="setType('linear')">线性渐变</button>
+        <button class="btn btn-sm btn-outline" id="btnRad" onclick="setType('radial')">径向渐变</button>
+        <span class="option-label" style="margin-left:15px">角度：</span>
+        <input type="range" id="angle" min="0" max="360" value="135" oninput="update()" style="width:120px;accent-color:var(--primary)">
+        <span id="angleV">135°</span>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;margin:15px 0;flex-wrap:wrap">
+        <label style="font-size:13px">颜色1：<input type="color" id="c1" value="#667eea" oninput="update()"></label>
+        <label style="font-size:13px">颜色2：<input type="color" id="c2" value="#764ba2" oninput="update()"></label>
+        <label style="font-size:13px">颜色3(可选)：<input type="color" id="c3" value="#f093fb" oninput="update()"> <input type="checkbox" id="useC3" onchange="update()"> 启用</label>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:15px;margin-top:10px">
+        <code id="cssCode" style="color:#a5b4fc;font-size:13px;word-break:break-all"></code>
+      </div>
+      <div class="btn-group"><button class="btn" onclick="copyToClipboard(document.getElementById('cssCode').textContent)">复制CSS代码</button></div>
+    </div>
+    <div class="preview-area" style="margin-top:20px">
+      <h3>精选渐变预设</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:12px" id="presets"></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let type='linear';
+  const PRESETS=[
+    {c:['#667eea','#764ba2'],name:'紫蓝'},{c:['#f093fb','#f5576c'],name:'粉红'},
+    {c:['#4facfe','#00f2fe'],name:'天蓝'},{c:['#43e97b','#38f9d7'],name:'翠绿'},
+    {c:['#fa709a','#fee140'],name:'暖阳'},{c:['#a18cd1','#fbc2eb'],name:'薰衣草'},
+    {c:['#ffecd2','#fcb69f'],name:'蜜桃'},{c:['#89f7fe','#66a6ff'],name:'海洋'},
+    {c:['#ff9a9e','#fecfef'],name:'樱花'},{c:['#f6d365','#fda085'],name:'日落'},
+    {c:['#fbc2eb','#a6c1ee'],name:'棉花糖'},{c:['#fdcbf1','#e6dee9'],name:'柔粉'},
+    {c:['#a1c4fd','#c2e9fb'],name:'晴空'},{c:['#d4fc79','#96e6a1'],name:'春天'},
+    {c:['#84fab0','#8fd3f4'],name:'薄荷'},{c:['#cfd9df','#e2ebf0'],name:'银灰'},
+    {c:['#0f2027','#203a43','#2c5364'],name:'深海'},{c:['#11998e','#38ef7d'],name:'森林'},
+    {c:['#fc5c7d','#6a82fb'],name:'极光'},{c:['#ee9ca7','#ffdde1'],name:'玫瑰'},
+  ];
+
+  function renderPresets(){
+    document.getElementById('presets').innerHTML=PRESETS.map((p,i)=>`<div onclick="applyPreset(${i})" style="height:60px;border-radius:10px;cursor:pointer;background:linear-gradient(135deg,${p.c.join(',')});display:flex;align-items:end;padding:5px 8px;transition:transform .2s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform=''"><span style="font-size:11px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)">${p.name}</span></div>`).join('');
+  }
+
+  function applyPreset(i){
+    const p=PRESETS[i];
+    document.getElementById('c1').value=p.c[0];
+    document.getElementById('c2').value=p.c[1];
+    if(p.c[2]){document.getElementById('c3').value=p.c[2];document.getElementById('useC3').checked=true;}
+    else{document.getElementById('useC3').checked=false;}
+    update();
+  }
+
+  function setType(t){
+    type=t;
+    document.getElementById('btnLin').className='btn btn-sm '+(t==='linear'?'active':'btn-outline');
+    document.getElementById('btnRad').className='btn btn-sm '+(t==='radial'?'active':'btn-outline');
+    update();
+  }
+
+  function update(){
+    const c1=document.getElementById('c1').value,c2=document.getElementById('c2').value;
+    const c3=document.getElementById('useC3').checked?document.getElementById('c3').value:null;
+    const angle=document.getElementById('angle').value;
+    document.getElementById('angleV').textContent=angle+'°';
+    const colors=c3?`${c1}, ${c3}, ${c2}`:`${c1}, ${c2}`;
+    let css;
+    if(type==='linear')css=`linear-gradient(${angle}deg, ${colors})`;
+    else css=`radial-gradient(circle, ${colors})`;
+    document.getElementById('preview').style.background=css;
+    document.getElementById('cssCode').textContent=`background: ${css};`;
+  }
+
+  renderPresets();update();
+  </script>
+</body>
+</html>

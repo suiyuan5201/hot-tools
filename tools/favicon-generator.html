@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Favicon生成器 - 免费在线工具</title>
+  <meta name="description" content="免费在线Favicon生成器，在线绘制或上传图片生成网站图标，支持多种尺寸导出">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>⭐ Favicon生成器</h1>
+    <p class="subtitle">在线绘制或上传图片生成网站图标</p>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(0)">像素绘制</div>
+      <div class="tab" onclick="switchTab(1)">上传图片</div>
+    </div>
+    <div id="tab0">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <label style="font-size:13px">画笔颜色：<input type="color" id="drawColor" value="#6366f1"></label>
+        <button class="btn btn-sm btn-outline" onclick="fillAll()">填充全部</button>
+        <button class="btn btn-sm btn-outline" onclick="clearGrid()">清空</button>
+        <label style="font-size:13px"><input type="checkbox" id="eraser"> 橡皮擦</label>
+      </div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
+        <canvas id="grid" style="border:1px solid var(--border);border-radius:4px;cursor:crosshair;image-rendering:pixelated"></canvas>
+        <div style="text-align:center">
+          <div style="font-size:13px;color:var(--text-light);margin-bottom:8px">预览</div>
+          <canvas id="prev16" width="16" height="16" style="width:16px;height:16px;border:1px solid var(--border);image-rendering:pixelated"></canvas>
+          <canvas id="prev32" width="32" height="32" style="width:32px;height:32px;border:1px solid var(--border);margin-left:8px;image-rendering:pixelated"></canvas>
+          <canvas id="prev64" width="64" height="64" style="width:64px;height:64px;border:1px solid var(--border);margin-left:8px;image-rendering:pixelated"></canvas>
+        </div>
+      </div>
+    </div>
+    <div id="tab1" style="display:none">
+      <div class="upload-area" onclick="document.getElementById('fi').click()">
+        <div class="icon">📁</div><p>上传图片自动转为Favicon</p>
+        <input type="file" id="fi" accept="image/*">
+      </div>
+    </div>
+    <div class="btn-group" style="margin-top:15px">
+      <button class="btn" onclick="dl(16)">下载 16×16</button>
+      <button class="btn btn-outline" onclick="dl(32)">下载 32×32</button>
+      <button class="btn btn-outline" onclick="dl(64)">下载 64×64</button>
+      <button class="btn btn-outline" onclick="dl(128)">下载 128×128</button>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  const SIZE=16,CELL=20;
+  const grid=document.getElementById('grid'),gctx=grid.getContext('2d');
+  grid.width=SIZE*CELL;grid.height=SIZE*CELL;
+  let pixels=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
+  let painting=false;
+
+  function drawGrid(){
+    gctx.clearRect(0,0,grid.width,grid.height);
+    gctx.fillStyle='#fff';gctx.fillRect(0,0,grid.width,grid.height);
+    // checkerboard bg
+    for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+      if((x+y)%2===0){gctx.fillStyle='#f1f5f9';gctx.fillRect(x*CELL,y*CELL,CELL,CELL);}
+      if(pixels[y][x]){gctx.fillStyle=pixels[y][x];gctx.fillRect(x*CELL,y*CELL,CELL,CELL);}
+    }
+    // grid lines
+    gctx.strokeStyle='#e2e8f0';gctx.lineWidth=0.5;
+    for(let i=0;i<=SIZE;i++){
+      gctx.beginPath();gctx.moveTo(i*CELL,0);gctx.lineTo(i*CELL,SIZE*CELL);gctx.stroke();
+      gctx.beginPath();gctx.moveTo(0,i*CELL);gctx.lineTo(SIZE*CELL,i*CELL);gctx.stroke();
+    }
+    updatePreviews();
+  }
+
+  function updatePreviews(){
+    [16,32,64].forEach(s=>{
+      const cv=document.getElementById('prev'+s);
+      const ctx=cv.getContext('2d');ctx.clearRect(0,0,s,s);
+      const ps=s/SIZE;
+      for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+        if(pixels[y][x]){ctx.fillStyle=pixels[y][x];ctx.fillRect(x*ps,y*ps,ps,ps);}
+      }
+    });
+  }
+
+  function paint(e){
+    const r=grid.getBoundingClientRect();
+    const x=Math.floor((e.clientX-r.left)/CELL),y=Math.floor((e.clientY-r.top)/CELL);
+    if(x<0||x>=SIZE||y<0||y>=SIZE)return;
+    pixels[y][x]=document.getElementById('eraser').checked?null:document.getElementById('drawColor').value;
+    drawGrid();
+  }
+
+  grid.addEventListener('mousedown',e=>{painting=true;paint(e);});
+  grid.addEventListener('mousemove',e=>{if(painting)paint(e);});
+  grid.addEventListener('mouseup',()=>painting=false);
+  grid.addEventListener('mouseleave',()=>painting=false);
+
+  function fillAll(){for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++)pixels[y][x]=document.getElementById('drawColor').value;drawGrid();}
+  function clearGrid(){pixels=Array.from({length:SIZE},()=>Array(SIZE).fill(null));drawGrid();}
+
+  function switchTab(i){
+    document.querySelectorAll('.tab').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+    document.getElementById('tab0').style.display=i===0?'':'none';
+    document.getElementById('tab1').style.display=i===1?'':'none';
+  }
+
+  document.getElementById('fi').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();r.onload=ev=>{
+      const img=new Image();img.onload=()=>{
+        const c=document.createElement('canvas');c.width=SIZE;c.height=SIZE;
+        c.getContext('2d').drawImage(img,0,0,SIZE,SIZE);
+        const d=c.getContext('2d').getImageData(0,0,SIZE,SIZE).data;
+        for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+          const i=(y*SIZE+x)*4;
+          if(d[i+3]>128)pixels[y][x]='#'+[d[i],d[i+1],d[i+2]].map(v=>v.toString(16).padStart(2,'0')).join('');
+          else pixels[y][x]=null;
+        }
+        drawGrid();switchTab(0);
+      };img.src=ev.target.result;
+    };r.readAsDataURL(f);
+  };
+
+  function dl(size){
+    const c=document.createElement('canvas');c.width=size;c.height=size;
+    const ctx=c.getContext('2d');const ps=size/SIZE;
+    for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+      if(pixels[y][x]){ctx.fillStyle=pixels[y][x];ctx.fillRect(x*ps,y*ps,ps,ps);}
+    }
+    c.toBlob(b=>downloadBlob(b,`favicon_${size}x${size}.png`),'image/png');showToast('下载成功！');
+  }
+  drawGrid();
+  </script>
+</body>
+</html>

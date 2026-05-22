@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>打字速度测试 - 免费在线工具</title>
+  <meta name="description" content="免费在线打字速度测试，实时显示速度、正确率，支持中英文，历史最佳记录">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>⌨️ 打字速度测试</h1>
+    <p class="subtitle">测试你的打字速度和准确率</p>
+    <div class="preview-area">
+      <div style="display:flex;gap:15px;justify-content:center;margin-bottom:15px;flex-wrap:wrap">
+        <button class="btn btn-sm active" onclick="setLang('en',this)">英文</button>
+        <button class="btn btn-sm btn-outline" onclick="setLang('zh',this)">中文</button>
+      </div>
+      <div id="textDisplay" style="font-size:18px;line-height:2;padding:20px;background:#f8fafc;border-radius:10px;margin-bottom:15px;min-height:100px;font-family:monospace;letter-spacing:1px"></div>
+      <textarea class="input" id="userInput" rows="4" placeholder="点击此处开始打字..." oninput="onType()" style="font-size:16px;font-family:monospace"></textarea>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0" id="stats">
+        <div style="text-align:center;padding:10px;background:#f8fafc;border-radius:8px"><div id="speed" style="font-size:1.5em;font-weight:700;color:var(--primary)">0</div><div style="font-size:11px;color:var(--text-light)">字/分钟</div></div>
+        <div style="text-align:center;padding:10px;background:#f8fafc;border-radius:8px"><div id="accuracy" style="font-size:1.5em;font-weight:700;color:#10b981">100%</div><div style="font-size:11px;color:var(--text-light)">正确率</div></div>
+        <div style="text-align:center;padding:10px;background:#f8fafc;border-radius:8px"><div id="time" style="font-size:1.5em;font-weight:700;color:#f59e0b">0s</div><div style="font-size:11px;color:var(--text-light)">用时</div></div>
+        <div style="text-align:center;padding:10px;background:#f8fafc;border-radius:8px"><div id="best" style="font-size:1.5em;font-weight:700;color:#ec4899">0</div><div style="font-size:11px;color:var(--text-light)">最佳记录</div></div>
+      </div>
+      <div class="btn-group"><button class="btn" onclick="restart()">🔄 重新开始</button></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  const EN_TEXTS=[
+    "The quick brown fox jumps over the lazy dog. Programming is the art of telling another human what one wants the computer to do.",
+    "Success is not final failure is not fatal it is the courage to continue that counts. Every expert was once a beginner.",
+    "In the middle of difficulty lies opportunity. The only way to do great work is to love what you do. Stay hungry stay foolish.",
+    "Code is like humor. When you have to explain it, it is bad. First solve the problem then write the code. Keep it simple.",
+    "Technology is best when it brings people together. The web does not just connect machines it connects people. Innovation distinguishes.",
+  ];
+  const ZH_TEXTS=[
+    "生活就像一盒巧克力你永远不知道下一颗是什么味道每一天都是一个全新的开始只要你愿意改变就永远不会太晚",
+    "成功不是终点失败也不是终结唯有继续前行的勇气才是最重要的每一个专家都曾经是初学者",
+    "在困难之中蕴含着机遇做伟大工作的唯一方法就是热爱你所做的事情保持饥饿保持愚蠢",
+    "代码就像幽默如果你必须解释它那它就不够好先解决问题再写代码保持简单就好",
+    "技术在连接人们的时候才是最好的互联网不仅连接了机器更连接了人创新才能脱颖而出",
+  ];
+  let lang='en',targetText='',startTime=null,timer=null,finished=false;
+  const bestKey='typing_best_';
+
+  function setLang(l,btn){
+    lang=l;
+    document.querySelectorAll('.preview-area .btn-sm').forEach(b=>b.className='btn btn-sm btn-outline');
+    btn.className='btn btn-sm active';
+    restart();
+  }
+
+  function restart(){
+    const texts=lang==='en'?EN_TEXTS:ZH_TEXTS;
+    targetText=texts[Math.floor(Math.random()*texts.length)];
+    document.getElementById('textDisplay').innerHTML=targetText.split('').map(c=>`<span>${c}</span>`).join('');
+    document.getElementById('userInput').value='';
+    document.getElementById('userInput').disabled=false;
+    document.getElementById('speed').textContent='0';
+    document.getElementById('accuracy').textContent='100%';
+    document.getElementById('time').textContent='0s';
+    startTime=null;finished=false;
+    clearInterval(timer);
+    document.getElementById('best').textContent=localStorage.getItem(bestKey+lang)||'0';
+  }
+
+  function onType(){
+    if(finished)return;
+    const input=document.getElementById('userInput').value;
+    if(!startTime){
+      startTime=Date.now();
+      timer=setInterval(updateStats,500);
+    }
+    // 高亮
+    const spans=document.getElementById('textDisplay').querySelectorAll('span');
+    let correct=0;
+    for(let i=0;i<targetText.length;i++){
+      if(i<input.length){
+        if(input[i]===targetText[i]){spans[i].style.color='#10b981';spans[i].style.background='#dcfce7';correct++;}
+        else{spans[i].style.color='#ef4444';spans[i].style.background='#fee2e2';}
+      }else{spans[i].style.color='';spans[i].style.background='';}
+    }
+    // 完成检测
+    if(input.length>=targetText.length){
+      finished=true;clearInterval(timer);
+      document.getElementById('userInput').disabled=true;
+      updateStats();
+      const speed=Math.round(correct/((Date.now()-startTime)/60000));
+      const best=+(localStorage.getItem(bestKey+lang)||0);
+      if(speed>best){localStorage.setItem(bestKey+lang,speed);document.getElementById('best').textContent=speed;showToast('新纪录！'+speed+' 字/分钟');}
+      else showToast('完成！速度: '+speed+' 字/分钟');
+    }
+  }
+
+  function updateStats(){
+    if(!startTime)return;
+    const input=document.getElementById('userInput').value;
+    const elapsed=(Date.now()-startTime)/1000;
+    let correct=0;
+    for(let i=0;i<input.length;i++){if(i<targetText.length&&input[i]===targetText[i])correct++;}
+    const speed=elapsed>0?Math.round(correct/(elapsed/60)):0;
+    const accuracy=input.length>0?Math.round(correct/input.length*100):100;
+    document.getElementById('speed').textContent=speed;
+    document.getElementById('accuracy').textContent=accuracy+'%';
+    document.getElementById('time').textContent=Math.round(elapsed)+'s';
+  }
+
+  restart();
+  </script>
+</body>
+</html>

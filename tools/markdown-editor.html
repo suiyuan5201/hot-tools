@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Markdown编辑器 - 免费在线工具</title>
+  <meta name="description" content="免费在线Markdown编辑器，实时预览，支持标题、加粗、列表、代码、表格等语法">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page" style="max-width:1100px">
+    <h1>📝 Markdown编辑器</h1>
+    <p class="subtitle">实时预览的Markdown编辑器</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn btn-sm btn-outline" onclick="ins('# ','')">H1</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('## ','')">H2</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('**','**')">加粗</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('*','*')">斜体</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('`','`')">代码</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('[','](url)')">链接</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('![alt](',')')">图片</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('- ','')">列表</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('> ','')">引用</button>
+      <button class="btn btn-sm btn-outline" onclick="ins('---\\n','')">分割线</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;min-height:500px">
+      <div><textarea class="input" id="md" style="height:100%;min-height:500px;font-size:14px;line-height:1.8" oninput="render()" placeholder="在此输入Markdown...">
+# 欢迎使用Markdown编辑器
+
+## 功能特点
+
+- **实时预览** 左边写，右边看
+- *斜体文字* 支持多种语法
+- `行内代码` 也没问题
+
+### 代码块
+
+```
+function hello() {
+  console.log("Hello World!");
+}
+```
+
+### 表格
+
+| 名称 | 说明 |
+|------|------|
+| 工具1 | 好用 |
+| 工具2 | 很棒 |
+
+> 这是一段引用文字
+
+[点击访问](https://example.com)
+
+---
+
+普通段落文本，支持**加粗**和*斜体*混合使用。
+      </textarea></div>
+      <div id="preview" style="background:#fff;border-radius:10px;padding:20px;border:1px solid var(--border);overflow-y:auto;max-height:540px;line-height:1.8;font-size:14px"></div>
+    </div>
+    <div class="btn-group"><button class="btn" onclick="exportHTML()">导出HTML</button><button class="btn btn-outline" onclick="copyToClipboard(document.getElementById('md').value)">复制Markdown</button></div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function parseMD(md){
+    let html=md
+      .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+      .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+      .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+      .replace(/^> (.+)$/gm,'<blockquote style="border-left:3px solid var(--primary);padding:8px 15px;margin:10px 0;background:#f8fafc;color:var(--text-light)">$1</blockquote>')
+      .replace(/^---$/gm,'<hr style="border:none;border-top:1px solid var(--border);margin:15px 0">')
+      .replace(/^- (.+)$/gm,'<li>$1</li>')
+      .replace(/(<li>.*<\/li>\n?)+/g,'<ul style="padding-left:20px;margin:8px 0">$&</ul>')
+      .replace(/\!\[([^\]]*)\]\(([^)]+)\)/g,'<img src="$2" alt="$1" style="max-width:100%;border-radius:6px">')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" style="color:var(--primary)" target="_blank">$1</a>')
+      .replace(/```([\s\S]*?)```/g,'<pre style="background:#1e293b;color:#e2e8f0;padding:15px;border-radius:8px;overflow-x:auto;font-size:13px"><code>$1</code></pre>')
+      .replace(/`([^`]+)`/g,'<code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:13px;color:#e11d48">$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g,'<em>$1</em>');
+    // 简单表格
+    html=html.replace(/(\|.+\|\n)+/g,m=>{
+      const rows=m.trim().split('\n').filter(r=>!/^\|[\s-|]+\|$/.test(r));
+      if(rows.length<1)return m;
+      const hdr=rows[0].split('|').filter(c=>c.trim());
+      const body=rows.slice(1);
+      let t='<table style="width:100%;border-collapse:collapse;margin:10px 0"><thead><tr>';
+      hdr.forEach(c=>t+=`<th style="border:1px solid var(--border);padding:8px;background:var(--bg);font-size:13px">${c.trim()}</th>`);
+      t+='</tr></thead><tbody>';
+      body.forEach(r=>{t+='<tr>';r.split('|').filter(c=>c.trim()).forEach(c=>t+=`<td style="border:1px solid var(--border);padding:8px;font-size:13px">${c.trim()}</td>`);t+='</tr>';});
+      return t+'</tbody></table>';
+    });
+    // 段落
+    html=html.replace(/^(?!<[hupltbao]|<\/|<br|<hr|<img|<pre|<code|<strong|<em|<ul|<li|<blockquote|<table)(.+)$/gm,'<p style="margin:8px 0">$1</p>');
+    return html;
+  }
+  function render(){document.getElementById('preview').innerHTML=parseMD(document.getElementById('md').value);}
+  function ins(before,after){
+    const ta=document.getElementById('md'),s=ta.selectionStart,e=ta.selectionEnd;
+    const sel=ta.value.substring(s,e)||'文本';
+    ta.value=ta.value.substring(0,s)+before+sel+after+ta.value.substring(e);
+    ta.focus();ta.selectionStart=s+before.length;ta.selectionEnd=s+before.length+sel.length;
+    render();
+  }
+  function exportHTML(){
+    const html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Markdown导出</title></head><body style="max-width:800px;margin:40px auto;padding:0 20px;font-family:sans-serif;line-height:1.8">'+parseMD(document.getElementById('md').value)+'</body></html>';
+    const blob=new Blob([html],{type:'text/html'});downloadBlob(blob,'markdown.html');showToast('导出成功！');
+  }
+  render();
+  </script>
+</body>
+</html>

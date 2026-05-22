@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>BMI计算器 - 免费在线工具</title>
+  <meta name="description" content="免费在线BMI计算器，输入身高体重计算身体质量指数，健康评估和建议">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>⚖️ BMI计算器</h1>
+    <p class="subtitle">身体质量指数计算和健康评估</p>
+    <div class="preview-area">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;max-width:400px;margin:0 auto">
+        <label style="font-size:14px">身高(cm)：<input type="number" id="height" class="input" value="170" oninput="calc()"></label>
+        <label style="font-size:14px">体重(kg)：<input type="number" id="weight" class="input" value="65" oninput="calc()"></label>
+      </div>
+      <div id="result" style="text-align:center;margin-top:25px"></div>
+      <div style="margin-top:20px;position:relative;height:40px;border-radius:20px;overflow:hidden;background:linear-gradient(to right,#3b82f6 0%,#22c55e 25%,#eab308 55%,#f97316 75%,#ef4444 100%)" id="bar">
+        <div id="marker" style="position:absolute;top:-5px;width:4px;height:50px;background:#1e293b;border-radius:2px;transition:left .5s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-top:4px">
+        <span>偏瘦&lt;18.5</span><span>正常18.5-24</span><span>偏胖24-28</span><span>肥胖&gt;28</span>
+      </div>
+      <div id="advice" style="margin-top:20px;padding:15px;border-radius:10px;font-size:14px;line-height:1.8"></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function calc(){
+    const h=+document.getElementById('height').value/100;
+    const w=+document.getElementById('weight').value;
+    if(!h||!w)return;
+    const bmi=w/(h*h);
+    let level,color,advice;
+    if(bmi<18.5){level='偏瘦';color='#3b82f6';advice='您的体重偏低，建议增加营养摄入，适当增重。可以多吃蛋白质丰富的食物，配合力量训练。';}
+    else if(bmi<24){level='正常';color='#22c55e';advice='恭喜！您的BMI在正常范围内，请继续保持健康的生活方式和均衡饮食。';}
+    else if(bmi<28){level='偏胖';color='#f97316';advice='您的体重偏高，建议控制饮食热量，增加有氧运动，每周至少运动3-5次。';}
+    else{level='肥胖';color='#ef4444';advice='您的BMI偏高，建议咨询医生或营养师，制定科学的减重计划。控制饮食+规律运动是关键。';}
+
+    const idealMin=(18.5*h*h).toFixed(1);
+    const idealMax=(24*h*h).toFixed(1);
+
+    document.getElementById('result').innerHTML=`
+      <div style="font-size:3em;font-weight:700;color:${color}">${bmi.toFixed(1)}</div>
+      <div style="font-size:1.2em;color:${color};font-weight:600;margin-top:4px">${level}</div>
+      <div style="font-size:13px;color:var(--text-light);margin-top:8px">标准体重范围：${idealMin} ~ ${idealMax} kg</div>
+    `;
+
+    // 标尺位置 (BMI 14-35映射到0-100%)
+    const percent=Math.min(100,Math.max(0,(bmi-14)/(35-14)*100));
+    document.getElementById('marker').style.left=`calc(${percent}% - 2px)`;
+
+    document.getElementById('advice').style.background=color+'15';
+    document.getElementById('advice').style.color=color;
+    document.getElementById('advice').innerHTML=`<b>健康建议：</b>${advice}`;
+  }
+  calc();
+  </script>
+</body>
+</html>

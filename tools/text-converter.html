@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>文本转换器 - 免费在线工具</title>
+  <meta name="description" content="免费在线文本转换工具，大小写转换、驼峰命名、去重排序、添加前缀后缀等">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🔠 文本转换器</h1>
+    <p class="subtitle">大小写、驼峰、去重、排序等文本批量处理</p>
+    <textarea class="input" id="txt" rows="8" placeholder="输入要转换的文本..." style="font-size:14px"></textarea>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:15px 0;justify-content:center">
+      <button class="btn btn-sm" onclick="conv(t=>t.toUpperCase())">全部大写</button>
+      <button class="btn btn-sm" onclick="conv(t=>t.toLowerCase())">全部小写</button>
+      <button class="btn btn-sm" onclick="conv(t=>t.replace(/\b\w/g,c=>c.toUpperCase()))">首字母大写</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.replace(/[-_\s]+(.)/g,(_,c)=>c.toUpperCase()).replace(/^./,c=>c.toLowerCase()))">驼峰命名</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.replace(/([a-z])([A-Z])/g,'$1_$2').replace(/[\s-]+/g,'_').toLowerCase())">下划线命名</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.replace(/([a-z])([A-Z])/g,'$1-$2').replace(/[\s_]+/g,'-').toLowerCase())">短横线命名</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;justify-content:center">
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>[...new Set(t.split('\\n'))].join('\\n'))">行去重</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.split('\\n').sort().join('\\n'))">行排序(升序)</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.split('\\n').sort().reverse().join('\\n'))">行排序(降序)</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.split('\\n').sort(()=>Math.random()-.5).join('\\n'))">行随机打乱</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.split('\\n').reverse().join('\\n'))">行反转</button>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;justify-content:center">
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.replace(/^\s+|\s+$/gm,''))">去首尾空格</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.replace(/\s+/g,''))">去所有空格</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.replace(/\n{2,}/g,'\\n'))">去空行</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.split('\\n').filter(l=>l.trim()).join('\\n'))">去空白行</button>
+      <button class="btn btn-sm btn-outline" onclick="conv(t=>t.split('').reverse().join(''))">文本反转</button>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin:15px 0;flex-wrap:wrap">
+      <input type="text" id="prefix" class="input" style="width:120px" placeholder="前缀">
+      <button class="btn btn-sm btn-outline" onclick="addFix()">添加前/后缀</button>
+      <input type="text" id="suffix" class="input" style="width:120px" placeholder="后缀">
+    </div>
+    <h3 style="margin-top:20px;font-size:15px">转换结果</h3>
+    <textarea class="input" id="out" rows="8" readonly style="font-size:14px;background:#f8fafc"></textarea>
+    <div class="btn-group">
+      <button class="btn" onclick="copyToClipboard(document.getElementById('out').value)">复制结果</button>
+      <button class="btn btn-outline" onclick="document.getElementById('txt').value=document.getElementById('out').value;showToast('已替换')">结果→输入</button>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function conv(fn){document.getElementById('out').value=fn(document.getElementById('txt').value);}
+  function addFix(){
+    const p=document.getElementById('prefix').value,s=document.getElementById('suffix').value;
+    conv(t=>t.split('\n').map(l=>p+l+s).join('\n'));
+  }
+  </script>
+</body>
+</html>

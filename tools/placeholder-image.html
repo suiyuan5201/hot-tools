@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>占位图生成器 - 免费在线工具</title>
+  <meta name="description" content="免费在线占位图生成器，快速生成指定尺寸的占位图片，支持自定义颜色和文字">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🖼️ 占位图生成器</h1>
+    <p class="subtitle">快速生成指定尺寸的占位图片</p>
+    <div class="preview-area">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+        <label>宽度(px)：<input type="number" id="w" class="input" value="800" oninput="render()"></label>
+        <label>高度(px)：<input type="number" id="h" class="input" value="600" oninput="render()"></label>
+        <label>背景色：<input type="color" id="bg" value="#e2e8f0" oninput="render()"></label>
+        <label>文字颜色：<input type="color" id="fc" value="#64748b" oninput="render()"></label>
+        <label>显示文字：<input type="text" id="txt" class="input" placeholder="默认显示尺寸" oninput="render()"></label>
+        <label>字体大小：<input type="range" id="fs" min="12" max="80" value="32" oninput="render()" style="width:100%"> <span id="fsV">32px</span></label>
+      </div>
+      <div style="margin:12px 0;font-size:13px;color:var(--text-light)">常用尺寸：</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-outline" onclick="setSize(1920,1080)">1920×1080</button>
+        <button class="btn btn-sm btn-outline" onclick="setSize(800,600)">800×600</button>
+        <button class="btn btn-sm btn-outline" onclick="setSize(400,300)">400×300</button>
+        <button class="btn btn-sm btn-outline" onclick="setSize(300,300)">300×300</button>
+        <button class="btn btn-sm btn-outline" onclick="setSize(150,150)">150×150</button>
+        <button class="btn btn-sm btn-outline" onclick="setSize(728,90)">Banner</button>
+        <button class="btn btn-sm btn-outline" onclick="setSize(1200,630)">OG Image</button>
+        <button class="btn btn-sm btn-outline" onclick="setSize(512,512)">App Icon</button>
+      </div>
+    </div>
+    <div style="text-align:center;margin:20px 0"><canvas id="cv" style="max-width:100%;border-radius:8px;box-shadow:var(--shadow)"></canvas></div>
+    <div class="btn-group"><button class="btn" onclick="dl()">下载PNG</button><button class="btn btn-outline" onclick="dlSVG()">下载SVG</button></div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function setSize(w,h){document.getElementById('w').value=w;document.getElementById('h').value=h;render();}
+  function render(){
+    const w=+document.getElementById('w').value||100,h=+document.getElementById('h').value||100;
+    const bg=document.getElementById('bg').value,fc=document.getElementById('fc').value;
+    const txt=document.getElementById('txt').value||`${w} × ${h}`;
+    const fs=+document.getElementById('fs').value;
+    document.getElementById('fsV').textContent=fs+'px';
+    const cv=document.getElementById('cv');
+    const maxD=Math.min(700,window.innerWidth-60);
+    const scale=w>maxD?maxD/w:1;
+    cv.width=w*scale;cv.height=h*scale;
+    const ctx=cv.getContext('2d');
+    ctx.fillStyle=bg;ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle=fc;ctx.font=`${fs*scale}px sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(txt,cv.width/2,cv.height/2);
+  }
+  function dl(){
+    const w=+document.getElementById('w').value||100,h=+document.getElementById('h').value||100;
+    const bg=document.getElementById('bg').value,fc=document.getElementById('fc').value;
+    const txt=document.getElementById('txt').value||`${w} × ${h}`;
+    const fs=+document.getElementById('fs').value;
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,w,h);
+    x.fillStyle=fc;x.font=`${fs}px sans-serif`;x.textAlign='center';x.textBaseline='middle';
+    x.fillText(txt,w/2,h/2);
+    c.toBlob(b=>downloadBlob(b,`placeholder_${w}x${h}.png`),'image/png');showToast('下载成功！');
+  }
+  function dlSVG(){
+    const w=+document.getElementById('w').value||100,h=+document.getElementById('h').value||100;
+    const bg=document.getElementById('bg').value,fc=document.getElementById('fc').value;
+    const txt=document.getElementById('txt').value||`${w} × ${h}`;
+    const fs=+document.getElementById('fs').value;
+    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="${bg}"/><text x="50%" y="50%" font-family="sans-serif" font-size="${fs}" fill="${fc}" text-anchor="middle" dominant-baseline="middle">${txt}</text></svg>`;
+    const blob=new Blob([svg],{type:'image/svg+xml'});downloadBlob(blob,`placeholder_${w}x${h}.svg`);showToast('下载成功！');
+  }
+  render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>随机抽奖 - 免费在线工具</title>
+  <meta name="description" content="免费在线随机抽奖工具，随机数生成、随机抽签、摇骰子、随机决定器">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🎲 随机抽奖</h1>
+    <p class="subtitle">随机数、抽签、摇骰子、随机决定</p>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(0)">随机数</div>
+      <div class="tab" onclick="switchTab(1)">抽签</div>
+      <div class="tab" onclick="switchTab(2)">骰子</div>
+      <div class="tab" onclick="switchTab(3)">随机决定</div>
+    </div>
+    <div id="tab0" class="preview-area">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <label style="font-size:14px">最小: <input type="number" id="rMin" class="input" style="width:100px;display:inline-block" value="1"></label>
+        <label style="font-size:14px">最大: <input type="number" id="rMax" class="input" style="width:100px;display:inline-block" value="100"></label>
+        <label style="font-size:14px">个数: <input type="number" id="rCount" class="input" style="width:80px;display:inline-block" value="1"></label>
+        <label style="font-size:14px"><input type="checkbox" id="rUnique" checked> 不重复</label>
+      </div>
+      <div class="btn-group"><button class="btn" onclick="genRandom()">🎲 生成</button></div>
+      <div id="randomResult" style="text-align:center;font-size:2.5em;font-weight:700;color:var(--primary);min-height:60px"></div>
+    </div>
+    <div id="tab1" class="preview-area" style="display:none">
+      <textarea class="input" id="names" rows="5" placeholder="每行一个名字，如：&#10;张三&#10;李四&#10;王五&#10;赵六">张三
+李四
+王五
+赵六
+周七
+吴八</textarea>
+      <div style="display:flex;gap:12px;align-items:center;justify-content:center;margin:10px 0">
+        <label style="font-size:14px">抽取人数: <input type="number" id="pickCount" class="input" style="width:80px;display:inline-block" value="1"></label>
+      </div>
+      <div class="btn-group"><button class="btn" onclick="draw()">🎯 开始抽签</button></div>
+      <div id="drawResult" style="text-align:center;font-size:1.5em;font-weight:700;color:var(--primary);min-height:40px"></div>
+    </div>
+    <div id="tab2" class="preview-area" style="display:none">
+      <div style="display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:15px">
+        <label style="font-size:14px">骰子数量: <select id="diceCount" class="option-select"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+      </div>
+      <div class="btn-group"><button class="btn" onclick="rollDice()">🎲 摇骰子</button></div>
+      <div id="diceResult" style="text-align:center;font-size:3em;min-height:60px;letter-spacing:15px"></div>
+      <div id="diceTotal" style="text-align:center;font-size:14px;color:var(--text-light)"></div>
+    </div>
+    <div id="tab3" class="preview-area" style="display:none">
+      <textarea class="input" id="options" rows="4" placeholder="每行一个选项，如：&#10;吃火锅&#10;吃烤肉&#10;吃pizza&#10;随便">吃火锅
+吃烤肉
+吃麻辣烫
+点外卖
+自己做</textarea>
+      <div class="btn-group"><button class="btn" onclick="decide()">🤔 帮我决定！</button></div>
+      <div id="decideResult" style="text-align:center;min-height:60px"></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function switchTab(i){
+    document.querySelectorAll('.tab').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+    [0,1,2,3].forEach(idx=>document.getElementById('tab'+idx).style.display=idx===i?'':'none');
+  }
+  function genRandom(){
+    const min=+document.getElementById('rMin').value,max=+document.getElementById('rMax').value;
+    const count=+document.getElementById('rCount').value,unique=document.getElementById('rUnique').checked;
+    if(min>max){showToast('最小值不能大于最大值');return;}
+    if(unique&&count>max-min+1){showToast('范围不够生成不重复的数');return;}
+    const results=new Set();
+    while(results.size<count){
+      const n=Math.floor(Math.random()*(max-min+1))+min;
+      if(unique)results.add(n);else{results.add(n+'_'+results.size);break;}
+    }
+    const nums=unique?[...results]:[...Array(count)].map(()=>Math.floor(Math.random()*(max-min+1))+min);
+    // 动画效果
+    const el=document.getElementById('randomResult');
+    let frame=0;
+    const anim=setInterval(()=>{
+      el.textContent=[...Array(count)].map(()=>Math.floor(Math.random()*(max-min+1))+min).join('  ');
+      frame++;
+      if(frame>15){clearInterval(anim);el.textContent=nums.join('  ');}
+    },50);
+  }
+  function draw(){
+    const names=document.getElementById('names').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    const count=Math.min(+document.getElementById('pickCount').value,names.length);
+    if(!names.length){showToast('请输入名单');return;}
+    const shuffled=[...names].sort(()=>Math.random()-.5);
+    const picked=shuffled.slice(0,count);
+    const el=document.getElementById('drawResult');
+    let frame=0;
+    const anim=setInterval(()=>{
+      el.textContent=names[Math.floor(Math.random()*names.length)];
+      el.style.color='var(--text-light)';
+      frame++;
+      if(frame>20){clearInterval(anim);el.innerHTML=picked.map(n=>`<span style="background:var(--primary);color:#fff;padding:4px 16px;border-radius:20px;margin:4px;display:inline-block">${n}</span>`).join('');el.style.color='';}
+    },80);
+  }
+  function rollDice(){
+    const count=+document.getElementById('diceCount').value;
+    const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];
+    const el=document.getElementById('diceResult');
+    let frame=0;
+    const anim=setInterval(()=>{
+      el.textContent=[...Array(count)].map(()=>faces[Math.floor(Math.random()*6)]).join('');
+      frame++;
+      if(frame>20){
+        clearInterval(anim);
+        const results=[...Array(count)].map(()=>Math.floor(Math.random()*6));
+        el.textContent=results.map(r=>faces[r]).join('');
+        document.getElementById('diceTotal').textContent='点数: '+results.map(r=>r+1).join(' + ')+' = '+results.reduce((s,r)=>s+r+1,0);
+      }
+    },60);
+  }
+  function decide(){
+    const opts=document.getElementById('options').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(!opts.length){showToast('请输入选项');return;}
+    const el=document.getElementById('decideResult');
+    let frame=0;
+    const anim=setInterval(()=>{
+      const r=opts[Math.floor(Math.random()*opts.length)];
+      el.innerHTML=`<div style="font-size:1.5em;color:var(--text-light)">${r}</div>`;
+      frame++;
+      if(frame>25){
+        clearInterval(anim);
+        const final=opts[Math.floor(Math.random()*opts.length)];
+        el.innerHTML=`<div style="font-size:2em;font-weight:700;color:var(--primary)">${final}</div><div style="font-size:14px;color:var(--text-light);margin-top:8px">就决定是你了！</div>`;
+      }
+    },70);
+  }
+  </script>
+</body>
+</html>

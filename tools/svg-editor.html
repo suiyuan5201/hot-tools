@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>SVG编辑器 - 免费在线工具</title>
+  <meta name="description" content="免费在线SVG编辑器，实时预览SVG代码，提供模板示例，导出SVG或PNG">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page" style="max-width:1000px">
+    <h1>✏️ SVG编辑器</h1>
+    <p class="subtitle">在线编辑预览SVG代码</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn btn-sm btn-outline" onclick="loadTpl('circle')">圆形</button>
+      <button class="btn btn-sm btn-outline" onclick="loadTpl('rect')">矩形</button>
+      <button class="btn btn-sm btn-outline" onclick="loadTpl('star')">五角星</button>
+      <button class="btn btn-sm btn-outline" onclick="loadTpl('gradient')">渐变</button>
+      <button class="btn btn-sm btn-outline" onclick="loadTpl('text')">文字</button>
+      <button class="btn btn-sm btn-outline" onclick="loadTpl('logo')">Logo</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+      <div><h3 style="font-size:14px;margin-bottom:8px;color:var(--text-light)">SVG代码</h3><textarea class="input" id="code" rows="16" oninput="preview()" style="font-family:monospace;font-size:12px"></textarea></div>
+      <div><h3 style="font-size:14px;margin-bottom:8px;color:var(--text-light)">实时预览</h3><div id="prev" style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;min-height:350px;display:flex;align-items:center;justify-content:center"></div></div>
+    </div>
+    <div class="btn-group">
+      <button class="btn" onclick="dlSVG()">下载SVG</button>
+      <button class="btn btn-outline" onclick="dlPNG()">下载PNG</button>
+      <button class="btn btn-outline" onclick="copyToClipboard(document.getElementById('code').value)">复制代码</button>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  const TPLS={
+    circle:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="80" fill="#6366f1" opacity="0.8"/>
+  <circle cx="100" cy="100" r="50" fill="#a5b4fc"/>
+  <circle cx="100" cy="100" r="20" fill="#fff"/>
+</svg>`,
+    rect:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <rect x="20" y="20" width="160" height="160" rx="20" fill="#10b981"/>
+  <rect x="50" y="50" width="100" height="100" rx="12" fill="#34d399"/>
+  <rect x="75" y="75" width="50" height="50" rx="8" fill="#fff"/>
+</svg>`,
+    star:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <polygon points="100,20 120,75 180,75 130,110 150,170 100,135 50,170 70,110 20,75 80,75" fill="#f59e0b" stroke="#f97316" stroke-width="3"/>
+</svg>`,
+    gradient:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="30" fill="url(#grad)"/>
+  <text x="100" y="110" text-anchor="middle" fill="#fff" font-size="20" font-family="sans-serif">渐变</text>
+</svg>`,
+    text:`<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100" viewBox="0 0 300 100">
+  <rect width="300" height="100" rx="15" fill="#1e293b"/>
+  <text x="150" y="60" text-anchor="middle" fill="#a5b4fc" font-size="28" font-weight="bold" font-family="sans-serif">Hello SVG!</text>
+</svg>`,
+    logo:`<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#6366f1"/>
+  <path d="M60 130 L100 60 L140 130 Z" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>
+  <circle cx="100" cy="110" r="12" fill="#fff"/>
+</svg>`
+  };
+  function loadTpl(name){document.getElementById('code').value=TPLS[name];preview();}
+  function preview(){document.getElementById('prev').innerHTML=document.getElementById('code').value;}
+  function dlSVG(){
+    const blob=new Blob([document.getElementById('code').value],{type:'image/svg+xml'});
+    downloadBlob(blob,'image.svg');showToast('下载成功！');
+  }
+  function dlPNG(){
+    const svg=document.getElementById('code').value;
+    const blob=new Blob([svg],{type:'image/svg+xml'});
+    const url=URL.createObjectURL(blob);
+    const img=new Image();
+    img.onload=()=>{
+      const c=document.createElement('canvas');c.width=img.width||400;c.height=img.height||400;
+      c.getContext('2d').drawImage(img,0,0);
+      c.toBlob(b=>{downloadBlob(b,'image.png');URL.revokeObjectURL(url);},'image/png');
+      showToast('下载成功！');
+    };
+    img.src=url;
+  }
+  loadTpl('circle');
+  </script>
+</body>
+</html>

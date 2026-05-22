@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>单位换算 - 免费在线工具</title>
+  <meta name="description" content="免费在线单位换算工具，支持长度、重量、温度、面积、数据存储等单位转换">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>📐 单位换算</h1>
+    <p class="subtitle">长度 / 重量 / 温度 / 面积 / 数据存储</p>
+    <div class="tabs" id="catTabs"></div>
+    <div class="preview-area">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
+        <input type="number" id="val" class="input" style="width:160px" value="1" oninput="convert()">
+        <select id="fromUnit" class="option-select" onchange="convert()"></select>
+        <span style="font-size:20px;color:var(--primary)">→</span>
+        <select id="toUnit" class="option-select" onchange="convert()"></select>
+      </div>
+      <div id="result" style="text-align:center;margin-top:20px;font-size:2em;font-weight:700;color:var(--primary)"></div>
+      <div id="allResults" style="margin-top:20px"></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  const CATS={
+    '长度':{base:'米',units:{米:1,厘米:100,毫米:1000,千米:0.001,英里:0.000621371,英尺:3.28084,英寸:39.3701,码:1.09361,海里:0.000539957}},
+    '重量':{base:'千克',units:{千克:1,克:1000,毫克:1000000,吨:0.001,磅:2.20462,盎司:35.274,斤:2}},
+    '温度':{base:'摄氏度',units:{'摄氏度':'C','华氏度':'F','开尔文':'K'},special:true},
+    '面积':{base:'平方米',units:{平方米:1,平方厘米:10000,平方千米:1e-6,公顷:1e-4,亩:0.0015,平方英尺:10.7639,平方英里:3.861e-7}},
+    '数据':{base:'字节',units:{字节:1,KB:1/1024,MB:1/1048576,GB:1/1073741824,TB:1/1099511627776,比特:8}},
+  };
+  let curCat='长度';
+
+  function renderTabs(){
+    document.getElementById('catTabs').innerHTML=Object.keys(CATS).map(c=>`<div class="tab${c===curCat?' active':''}" onclick="setCat('${c}')">${c}</div>`).join('');
+  }
+
+  function setCat(c){
+    curCat=c;renderTabs();
+    const cat=CATS[c];
+    const units=Object.keys(cat.units);
+    document.getElementById('fromUnit').innerHTML=units.map((u,i)=>`<option value="${u}"${i===0?' selected':''}>${u}</option>`).join('');
+    document.getElementById('toUnit').innerHTML=units.map((u,i)=>`<option value="${u}"${i===1?' selected':''}>${u}</option>`).join('');
+    convert();
+  }
+
+  function convert(){
+    const cat=CATS[curCat];
+    const val=+document.getElementById('val').value;
+    const from=document.getElementById('fromUnit').value;
+    const to=document.getElementById('toUnit').value;
+
+    let result;
+    if(cat.special){
+      // 温度特殊处理
+      let celsius;
+      if(from==='摄氏度')celsius=val;
+      else if(from==='华氏度')celsius=(val-32)*5/9;
+      else celsius=val-273.15;
+
+      if(to==='摄氏度')result=celsius;
+      else if(to==='华氏度')result=celsius*9/5+32;
+      else result=celsius+273.15;
+    }else{
+      const baseVal=val/cat.units[from];
+      result=baseVal*cat.units[to];
+    }
+
+    document.getElementById('result').textContent=smartFormat(result)+' '+to;
+
+    // 显示所有单位换算
+    const units=Object.keys(cat.units);
+    let html='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px">';
+    units.forEach(u=>{
+      let r;
+      if(cat.special){
+        let celsius;
+        if(from==='摄氏度')celsius=val;
+        else if(from==='华氏度')celsius=(val-32)*5/9;
+        else celsius=val-273.15;
+        if(u==='摄氏度')r=celsius;
+        else if(u==='华氏度')r=celsius*9/5+32;
+        else r=celsius+273.15;
+      }else{
+        r=val/cat.units[from]*cat.units[u];
+      }
+      const active=u===to?'background:var(--primary);color:#fff':'background:#f8fafc';
+      html+=`<div style="padding:10px;border-radius:8px;${active};font-size:13px;cursor:pointer" onclick="document.getElementById('toUnit').value='${u}';convert()"><b>${smartFormat(r)}</b> ${u}</div>`;
+    });
+    html+='</div>';
+    document.getElementById('allResults').innerHTML=html;
+  }
+
+  function smartFormat(n){
+    if(Math.abs(n)>=1e6||Math.abs(n)<0.001&&n!==0)return n.toExponential(4);
+    return parseFloat(n.toPrecision(8)).toString();
+  }
+
+  renderTabs();setCat('长度');
+  </script>
+</body>
+</html>

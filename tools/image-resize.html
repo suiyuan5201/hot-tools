@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>在线图片缩放 - 免费在线工具</title>
+  <meta name="description" content="免费在线调整图片尺寸，支持锁定比例缩放，自定义宽高像素">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🔍 图片缩放</h1>
+    <p class="subtitle">调整图片尺寸，支持锁定宽高比例</p>
+    <div class="upload-area" onclick="document.getElementById('fi').click()">
+      <div class="icon">📁</div><p>点击上传图片</p>
+      <input type="file" id="fi" accept="image/*">
+    </div>
+    <div id="editor" style="display:none">
+      <div class="preview-area">
+        <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;justify-content:center;margin-bottom:15px">
+          <label>宽: <input type="number" id="tw" class="input" style="width:100px;display:inline-block" oninput="onW()"> px</label>
+          <button id="lockBtn" class="btn btn-sm" onclick="toggleLock()">🔒 锁定比例</button>
+          <label>高: <input type="number" id="th" class="input" style="width:100px;display:inline-block" oninput="onH()"> px</label>
+        </div>
+        <div class="info-bar"><span class="info-item" id="origInfo"></span><span class="info-item" id="newInfo"></span></div>
+        <div style="text-align:center;margin:15px 0">
+          <canvas id="cv" style="max-width:100%;border-radius:8px;box-shadow:var(--shadow)"></canvas>
+        </div>
+        <div class="btn-group">
+          <button class="btn" onclick="doResize()">下载缩放后图片</button>
+          <button class="btn btn-outline" onclick="reset50()">50%</button>
+          <button class="btn btn-outline" onclick="reset75()">75%</button>
+          <button class="btn btn-outline" onclick="reset200()">200%</button>
+        </div>
+      </div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let img,locked=true,aspect;
+  document.getElementById('fi').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      img=new Image();
+      img.onload=()=>{
+        aspect=img.width/img.height;
+        document.getElementById('tw').value=img.width;
+        document.getElementById('th').value=img.height;
+        document.getElementById('origInfo').textContent='原始: '+img.width+'×'+img.height;
+        document.querySelector('.upload-area').style.display='none';
+        document.getElementById('editor').style.display='block';
+        preview();
+      };
+      img.src=ev.target.result;
+    };
+    r.readAsDataURL(f);
+  };
+  function toggleLock(){locked=!locked;document.getElementById('lockBtn').textContent=locked?'🔒 锁定比例':'🔓 自由比例'}
+  function onW(){if(locked){document.getElementById('th').value=Math.round(document.getElementById('tw').value/aspect)}preview()}
+  function onH(){if(locked){document.getElementById('tw').value=Math.round(document.getElementById('th').value*aspect)}preview()}
+  function preview(){
+    const w=+document.getElementById('tw').value||img.width,h=+document.getElementById('th').value||img.height;
+    const cv=document.getElementById('cv');
+    const maxW=Math.min(600,window.innerWidth-80);
+    const s=w>maxW?maxW/w:1;
+    cv.width=w*s;cv.height=h*s;
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+    document.getElementById('newInfo').textContent='新尺寸: '+w+'×'+h;
+  }
+  function doResize(){
+    const w=+document.getElementById('tw').value,h=+document.getElementById('th').value;
+    const c=document.createElement('canvas');c.width=w;c.height=h;
+    c.getContext('2d').drawImage(img,0,0,w,h);
+    c.toBlob(b=>downloadBlob(b,'resized_'+w+'x'+h+'.png'),'image/png');
+    showToast('下载成功！');
+  }
+  function reset50(){document.getElementById('tw').value=Math.round(img.width*.5);onW()}
+  function reset75(){document.getElementById('tw').value=Math.round(img.width*.75);onW()}
+  function reset200(){document.getElementById('tw').value=img.width*2;onW()}
+  </script>
+</body>
+</html>

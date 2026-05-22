@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>字数统计 - 免费在线工具</title>
+  <meta name="description" content="免费在线字数统计工具，实时统计字符数、中英文字数、段落数、阅读时间、词频分析">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>📊 字数统计</h1>
+    <p class="subtitle">实时统计字符数、词频、预估阅读时间</p>
+    <textarea class="input" id="txt" rows="10" placeholder="在此输入或粘贴文本..." oninput="count()" style="font-size:15px"></textarea>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:20px 0" id="stats"></div>
+    <div class="preview-area" id="freqBox" style="display:none">
+      <h3>词频 TOP 10</h3>
+      <div id="freq" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  function count(){
+    const t=document.getElementById('txt').value;
+    const total=t.length;
+    const chinese=(t.match(/[一-鿿]/g)||[]).length;
+    const english=(t.match(/[a-zA-Z]+/g)||[]).length;
+    const digits=(t.match(/\d/g)||[]).length;
+    const spaces=(t.match(/\s/g)||[]).length;
+    const lines=t?t.split('\n').length:0;
+    const paragraphs=t?t.split(/\n\s*\n/).filter(p=>p.trim()).length:0;
+    const words=chinese+english;
+    const readMin=Math.max(1,Math.ceil(words/400));
+
+    const items=[
+      {label:'总字符',value:total,color:'#6366f1'},
+      {label:'中文字',value:chinese,color:'#ec4899'},
+      {label:'英文词',value:english,color:'#0ea5e9'},
+      {label:'数字',value:digits,color:'#f59e0b'},
+      {label:'空格',value:spaces,color:'#64748b'},
+      {label:'行数',value:lines,color:'#14b8a6'},
+      {label:'段落',value:paragraphs,color:'#8b5cf6'},
+      {label:'阅读时间',value:readMin+'分钟',color:'#ef4444'},
+    ];
+    document.getElementById('stats').innerHTML=items.map(i=>`<div style="background:#fff;border-radius:12px;padding:15px;text-align:center;box-shadow:var(--shadow)"><div style="font-size:1.6em;font-weight:700;color:${i.color}">${i.value}</div><div style="font-size:12px;color:var(--text-light);margin-top:4px">${i.label}</div></div>`).join('');
+
+    // 词频
+    if(t.length>0){
+      const charFreq={};
+      for(const ch of t){if(/[一-鿿]/.test(ch)){charFreq[ch]=(charFreq[ch]||0)+1;}}
+      const wordMatches=t.match(/[a-zA-Z]+/g)||[];
+      wordMatches.forEach(w=>{const lw=w.toLowerCase();charFreq[lw]=(charFreq[lw]||0)+1;});
+      const sorted=Object.entries(charFreq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      if(sorted.length){
+        document.getElementById('freqBox').style.display='block';
+        document.getElementById('freq').innerHTML=sorted.map(([w,c])=>`<span class="info-item" style="font-size:13px">${w} <b>${c}</b></span>`).join('');
+      }else{document.getElementById('freqBox').style.display='none';}
+    }else{document.getElementById('freqBox').style.display='none';}
+  }
+  </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>在线记事本 - 免费在线工具</title>
+  <meta name="description" content="免费在线记事本，自动保存到浏览器，支持多个笔记，导出txt文件">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>📋 在线记事本</h1>
+    <p class="subtitle">自动保存，支持多个笔记</p>
+    <div style="display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap;align-items:center">
+      <div id="noteTabs" style="display:flex;gap:4px;flex-wrap:wrap;flex:1"></div>
+      <button class="btn btn-sm" onclick="addNote()">+ 新建</button>
+    </div>
+    <textarea class="input" id="editor" rows="18" oninput="saveNote()" style="font-size:15px;line-height:1.8" placeholder="开始写点什么..."></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px;color:var(--text-light)">
+      <span id="wordCount">0 字</span>
+      <span id="saveStatus">已保存</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-sm" onclick="exportNote()">导出txt</button>
+      <button class="btn btn-sm btn-outline" onclick="deleteNote()">删除当前</button>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let notes=JSON.parse(localStorage.getItem('notepad_notes')||'[{"id":1,"title":"笔记1","content":""}]');
+  let currentId=notes[0].id;
+
+  function save(){localStorage.setItem('notepad_notes',JSON.stringify(notes));}
+
+  function renderTabs(){
+    document.getElementById('noteTabs').innerHTML=notes.map(n=>
+      `<button class="btn btn-sm ${n.id===currentId?'':'btn-outline'}" onclick="switchNote(${n.id})" style="font-size:12px">${n.title}</button>`
+    ).join('');
+  }
+
+  function switchNote(id){
+    currentId=id;
+    const note=notes.find(n=>n.id===id);
+    document.getElementById('editor').value=note?note.content:'';
+    renderTabs();updateCount();
+  }
+
+  function saveNote(){
+    const note=notes.find(n=>n.id===currentId);
+    if(note){note.content=document.getElementById('editor').value;save();}
+    document.getElementById('saveStatus').textContent='已保存';
+    updateCount();
+  }
+
+  function addNote(){
+    const id=Date.now();
+    const title='笔记'+(notes.length+1);
+    notes.push({id,title,content:''});
+    save();currentId=id;
+    document.getElementById('editor').value='';
+    renderTabs();
+  }
+
+  function deleteNote(){
+    if(notes.length<=1){showToast('至少保留一个笔记');return;}
+    notes=notes.filter(n=>n.id!==currentId);save();
+    currentId=notes[0].id;switchNote(currentId);
+    showToast('已删除');
+  }
+
+  function exportNote(){
+    const note=notes.find(n=>n.id===currentId);
+    if(!note)return;
+    const blob=new Blob([note.content],{type:'text/plain;charset=utf-8'});
+    downloadBlob(blob,note.title+'.txt');showToast('导出成功！');
+  }
+
+  function updateCount(){
+    const text=document.getElementById('editor').value;
+    document.getElementById('wordCount').textContent=text.length+' 字';
+  }
+
+  switchNote(currentId);renderTabs();
+  </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>URL编码解码 - 免费在线工具</title>
+  <meta name="description" content="免费在线URL编码解码工具，支持URL编码、Base64编码、HTML实体编码转换">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🔗 URL编码解码</h1>
+    <p class="subtitle">URL / Base64 / HTML实体 编码解码</p>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(0)">URL编码</div>
+      <div class="tab" onclick="switchTab(1)">Base64</div>
+      <div class="tab" onclick="switchTab(2)">HTML实体</div>
+    </div>
+    <textarea class="input" id="inp" rows="5" placeholder="输入要编码/解码的文本..." style="font-family:monospace"></textarea>
+    <div class="btn-group">
+      <button class="btn" onclick="encode()">编码 ↓</button>
+      <button class="btn btn-outline" onclick="decode()">解码 ↑</button>
+      <button class="btn btn-outline" onclick="copyToClipboard(document.getElementById('out').value)">复制结果</button>
+    </div>
+    <textarea class="input" id="out" rows="5" readonly style="font-family:monospace;background:#f8fafc"></textarea>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let mode=0;
+  function switchTab(i){mode=i;document.querySelectorAll('.tab').forEach((t,idx)=>t.classList.toggle('active',idx===i));}
+  function encode(){
+    const v=document.getElementById('inp').value;
+    try{
+      if(mode===0)document.getElementById('out').value=encodeURIComponent(v);
+      else if(mode===1)document.getElementById('out').value=btoa(unescape(encodeURIComponent(v)));
+      else document.getElementById('out').value=v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }catch(e){showToast('编码失败: '+e.message);}
+  }
+  function decode(){
+    const v=document.getElementById('inp').value;
+    try{
+      if(mode===0)document.getElementById('out').value=decodeURIComponent(v);
+      else if(mode===1)document.getElementById('out').value=decodeURIComponent(escape(atob(v)));
+      else{const el=document.createElement('textarea');el.innerHTML=v;document.getElementById('out').value=el.value;}
+    }catch(e){showToast('解码失败: '+e.message);}
+  }
+  </script>
+</body>
+</html>

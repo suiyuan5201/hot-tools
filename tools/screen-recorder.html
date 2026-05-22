@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>屏幕录制 - 免费在线工具</title>
+  <meta name="description" content="免费在线屏幕录制工具，无需安装软件，浏览器直接录制屏幕，下载WebM视频">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🖥️ 屏幕录制</h1>
+    <p class="subtitle">无需安装软件，浏览器直接录制屏幕</p>
+    <div class="preview-area" style="text-align:center">
+      <div id="timer" style="font-size:2.5em;font-weight:700;color:var(--primary);margin:15px 0">00:00</div>
+      <div id="status" style="font-size:14px;color:var(--text-light);margin-bottom:15px">点击开始录制</div>
+      <div class="options-row">
+        <label style="font-size:13px"><input type="checkbox" id="withAudio"> 录制系统声音</label>
+      </div>
+      <div class="btn-group">
+        <button class="btn" id="startBtn" onclick="startRec()">🔴 开始录制</button>
+        <button class="btn btn-outline" id="stopBtn" onclick="stopRec()" disabled>⏹ 停止</button>
+      </div>
+      <div id="result" style="margin-top:20px;display:none">
+        <video id="video" controls style="width:100%;max-height:400px;border-radius:8px;background:#000"></video>
+        <div class="btn-group" style="margin-top:10px">
+          <button class="btn" onclick="downloadVideo()">下载视频</button>
+        </div>
+      </div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let mediaRecorder,chunks=[],stream,startTime,timerInterval,recordedBlob;
+
+  async function startRec(){
+    try{
+      const withAudio=document.getElementById('withAudio').checked;
+      const displayOpts={video:true};
+      if(withAudio)displayOpts.audio=true;
+      stream=await navigator.mediaDevices.getDisplayMedia(displayOpts);
+
+      mediaRecorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9'});
+      chunks=[];
+      mediaRecorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
+      mediaRecorder.onstop=()=>{
+        recordedBlob=new Blob(chunks,{type:'video/webm'});
+        document.getElementById('video').src=URL.createObjectURL(recordedBlob);
+        document.getElementById('result').style.display='block';
+        document.getElementById('status').textContent='录制完成！';
+        stream.getTracks().forEach(t=>t.stop());
+      };
+
+      // 用户停止共享时自动停止
+      stream.getVideoTracks()[0].onended=()=>stopRec();
+
+      mediaRecorder.start();
+      startTime=Date.now();
+      timerInterval=setInterval(updateTimer,1000);
+      document.getElementById('startBtn').disabled=true;
+      document.getElementById('stopBtn').disabled=false;
+      document.getElementById('status').textContent='正在录制...';
+      document.getElementById('result').style.display='none';
+    }catch(e){
+      if(e.name!=='AbortError')showToast('无法录制屏幕: '+e.message);
+    }
+  }
+
+  function stopRec(){
+    if(mediaRecorder&&mediaRecorder.state!=='inactive'){
+      mediaRecorder.stop();
+      clearInterval(timerInterval);
+      document.getElementById('startBtn').disabled=false;
+      document.getElementById('stopBtn').disabled=true;
+      mediaRecorder=null;
+    }
+  }
+
+  function updateTimer(){
+    const elapsed=Math.floor((Date.now()-startTime)/1000);
+    const m=Math.floor(elapsed/60),s=elapsed%60;
+    document.getElementById('timer').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  }
+
+  function downloadVideo(){
+    if(!recordedBlob)return;
+    downloadBlob(recordedBlob,'screen_recording.webm');showToast('下载成功！');
+  }
+  </script>
+</body>
+</html>

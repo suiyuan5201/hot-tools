@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>图片拼接 - 免费在线工具</title>
+  <meta name="description" content="免费在线图片拼接工具，多图横向或纵向拼接合并，可调间距和背景色">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <nav class="navbar"><a href="../tools.html" class="logo">🛠 在线工具箱</a><a href="../tools.html" class="nav-link">← 返回</a></nav>
+  <div class="tool-page">
+    <h1>🧩 图片拼接</h1>
+    <p class="subtitle">多图横向或纵向拼接合并</p>
+    <div class="upload-area" onclick="document.getElementById('fi').click()">
+      <div class="icon">📁</div><p>点击上传多张图片</p>
+      <input type="file" id="fi" accept="image/*" multiple>
+    </div>
+    <div id="editor" style="display:none">
+      <div class="options-row">
+        <span class="option-label">方向：</span>
+        <button class="btn btn-sm active" id="btnH" onclick="setDir('h')">横向拼接</button>
+        <button class="btn btn-sm btn-outline" id="btnV" onclick="setDir('v')">纵向拼接</button>
+        <span class="option-label" style="margin-left:15px">间距：</span>
+        <input type="range" id="gap" min="0" max="40" value="5" style="width:100px;accent-color:var(--primary)" oninput="render()">
+        <span id="gapV">5px</span>
+        <span class="option-label" style="margin-left:15px">背景：</span>
+        <input type="color" id="bg" value="#ffffff" oninput="render()">
+      </div>
+      <div style="text-align:center;margin:15px 0"><canvas id="cv" style="max-width:100%;border-radius:8px;box-shadow:var(--shadow)"></canvas></div>
+      <div class="btn-group"><button class="btn" onclick="dl()">下载拼接图</button><button class="btn btn-outline" onclick="document.getElementById('fi').click()">重新选择</button></div>
+    </div>
+    <div class="ad-placeholder">广告位 - Google AdSense</div>
+  </div>
+  <footer class="footer">免费在线工具箱 © 2024</footer>
+  <script src="../js/common.js"></script>
+  <script>
+  let imgs=[],dir='h';
+  document.getElementById('fi').onchange=e=>{
+    const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));
+    if(!files.length)return;
+    imgs=[];let loaded=0;
+    files.forEach(f=>{
+      const r=new FileReader();r.onload=ev=>{
+        const im=new Image();im.onload=()=>{
+          imgs.push(im);loaded++;
+          if(loaded===files.length){
+            document.querySelector('.upload-area').style.display='none';
+            document.getElementById('editor').style.display='block';
+            render();
+          }
+        };im.src=ev.target.result;
+      };r.readAsDataURL(f);
+    });
+  };
+  function setDir(d){dir=d;document.getElementById('btnH').className='btn btn-sm '+(d==='h'?'active':'btn-outline');document.getElementById('btnV').className='btn btn-sm '+(d==='v'?'active':'btn-outline');render();}
+  function render(){
+    const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+    const gap=+document.getElementById('gap').value;
+    document.getElementById('gapV').textContent=gap+'px';
+    const bg=document.getElementById('bg').value;
+    let totalW,totalH;
+    if(dir==='h'){
+      const maxH=Math.max(...imgs.map(i=>i.height));
+      totalW=imgs.reduce((s,i)=>s+i.width*(maxH/i.height),0)+gap*(imgs.length-1);
+      totalH=maxH;
+    }else{
+      const maxW=Math.max(...imgs.map(i=>i.width));
+      totalW=maxW;
+      totalH=imgs.reduce((s,i)=>s+i.height*(maxW/i.width),0)+gap*(imgs.length-1);
+    }
+    const maxDisplay=Math.min(800,window.innerWidth-60);
+    const scale=totalW>maxDisplay?maxDisplay/totalW:1;
+    cv.width=totalW*scale;cv.height=totalH*scale;
+    ctx.fillStyle=bg;ctx.fillRect(0,0,cv.width,cv.height);
+    let offset=0;
+    imgs.forEach(im=>{
+      if(dir==='h'){
+        const maxH=Math.max(...imgs.map(i=>i.height));
+        const h=maxH*scale,w=im.width*(maxH/im.height)*scale;
+        ctx.drawImage(im,offset,0,w,h);offset+=w+gap*scale;
+      }else{
+        const maxW=Math.max(...imgs.map(i=>i.width));
+        const w=maxW*scale,h=im.height*(maxW/im.width)*scale;
+        ctx.drawImage(im,0,offset,w,h);offset+=h+gap*scale;
+      }
+    });
+  }
+  function dl(){
+    const gap=+document.getElementById('gap').value,bg=document.getElementById('bg').value;
+    let totalW,totalH;
+    if(dir==='h'){const maxH=Math.max(...imgs.map(i=>i.height));totalW=imgs.reduce((s,i)=>s+i.width*(maxH/i.height),0)+gap*(imgs.length-1);totalH=maxH;}
+    else{const maxW=Math.max(...imgs.map(i=>i.width));totalW=maxW;totalH=imgs.reduce((s,i)=>s+i.height*(maxW/i.width),0)+gap*(imgs.length-1);}
+    const c=document.createElement('canvas');c.width=totalW;c.height=totalH;
+    const x=c.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,c.width,c.height);
+    let offset=0;
+    imgs.forEach(im=>{
+      if(dir==='h'){const maxH=Math.max(...imgs.map(i=>i.height));const h=maxH,w=im.width*(maxH/im.height);x.drawImage(im,offset,0,w,h);offset+=w+gap;}
+      else{const maxW=Math.max(...imgs.map(i=>i.width));const w=maxW,h=im.height*(maxW/im.width);x.drawImage(im,0,offset,w,h);offset+=h+gap;}
+    });
+    c.toBlob(b=>downloadBlob(b,'spliced.png'),'image/png');showToast('下载成功！');
+  }
+  </script>
+</body>
+</html>
