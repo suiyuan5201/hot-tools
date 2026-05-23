@@ -107,6 +107,31 @@
 
 /* 参考线 */
 .guide-overlay{position:absolute;top:0;left:0;pointer-events:none}
+
+/* 付费弹窗 */
+.pay-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center}
+.pay-overlay.show{display:flex}
+.pay-modal{background:#fff;border-radius:16px;padding:30px 28px;max-width:420px;width:92%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative;animation:payIn .3s ease}
+@keyframes payIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.pay-modal .close-btn{position:absolute;top:12px;right:16px;font-size:22px;color:#aaa;cursor:pointer;background:none;border:none;line-height:1}
+.pay-modal .close-btn:hover{color:#333}
+.pay-modal h2{font-size:1.3em;margin-bottom:6px;color:#1e293b}
+.pay-modal .price-tag{font-size:2.2em;font-weight:800;color:#ef4444;margin:10px 0 4px}
+.pay-modal .price-tag small{font-size:.45em;color:#999;font-weight:400;text-decoration:line-through;margin-left:6px}
+.pay-modal .price-note{font-size:12px;color:#64748b;margin-bottom:16px}
+.pay-modal .qr-area{background:#f9fafb;border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid #e2e8f0}
+.pay-modal .qr-area img{width:200px;height:200px;border-radius:8px;object-fit:contain}
+.pay-modal .qr-area p{font-size:12px;color:#64748b;margin-top:8px}
+.pay-modal .code-input-row{display:flex;gap:8px;margin-bottom:12px}
+.pay-modal .code-input-row input{flex:1;padding:10px 14px;border:2px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;transition:border-color .2s}
+.pay-modal .code-input-row input:focus{border-color:var(--primary)}
+.pay-modal .code-input-row button{padding:10px 18px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-weight:600;white-space:nowrap;transition:background .2s}
+.pay-modal .code-input-row button:hover{background:var(--primary-dark)}
+.pay-modal .code-err{color:#ef4444;font-size:12px;margin:-6px 0 10px;display:none}
+.pay-modal .free-dl-btn{display:block;width:100%;padding:12px;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;cursor:pointer;transition:all .2s;margin-top:4px}
+.pay-modal .free-dl-btn:hover{background:#e5e7eb;color:#374151}
+.pay-modal .benefits{display:flex;justify-content:center;gap:16px;margin:12px 0;font-size:11px;color:#64748b}
+.pay-modal .benefits span{display:flex;align-items:center;gap:3px}
 </style>
 </head>
 <body>
@@ -118,7 +143,7 @@
     <p class="subtitle">智能裁切 · 美颜修图 · 多种尺寸 · 一键排版打印</p>
     <div class="features-bar">
       <span>🔒 隐私安全，不上传照片</span>
-      <span>💰 完全免费，无水印</span>
+      <span>💰 免费预览，高清下载仅¥3.9</span>
       <span>📱 手机电脑都能用</span>
     </div>
   </div>
@@ -787,12 +812,106 @@ function generateFinalCanvas() {
 // ====== 下载 ======
 function downloadSingle() {
   if (!img) return;
+  showPayModal('single');
+}
+
+function downloadSheet() {
+  if (!img) return;
+  showPayModal('sheet');
+}
+
+function downloadDataUrl(dataUrl, filename) {
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = dataUrl;
+  link.click();
+}
+
+// ====== 付费模式 ======
+let pendingDownloadType = ''; // 'single' or 'sheet'
+const UNLOCK_CODES = ['PHOTO39','VIP2024','IDPHOTO','ZHAOPIAN'];
+
+function isPaid() {
+  return localStorage.getItem('idphoto_paid') === '1';
+}
+
+function showPayModal(type) {
+  if (isPaid()) { downloadClean(type); return; }
+  pendingDownloadType = type;
+  document.getElementById('payOverlay').classList.add('show');
+  document.getElementById('codeErr').style.display = 'none';
+  document.getElementById('unlockCode').value = '';
+}
+
+function closePayModal() {
+  document.getElementById('payOverlay').classList.remove('show');
+}
+
+function addWatermark(canvas) {
+  const ctx = canvas.getContext('2d');
+  const text = '仅供预览 付费去水印';
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = '#999';
+  const fontSize = Math.max(16, Math.min(canvas.width, canvas.height) / 12);
+  ctx.font = `bold ${fontSize}px sans-serif`;
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+  ctx.rotate(-30 * Math.PI / 180);
+  const stepX = fontSize * 10;
+  const stepY = fontSize * 3.5;
+  for (let y = -canvas.height; y < canvas.height * 2; y += stepY) {
+    for (let x = -canvas.width; x < canvas.width * 2; x += stepX) {
+      ctx.fillText(text, x - canvas.width, y - canvas.height);
+    }
+  }
+  ctx.restore();
+  return canvas;
+}
+
+function downloadFree() {
+  if (!img) return;
+  closePayModal();
+  if (pendingDownloadType === 'sheet') {
+    const c = generateSheetCanvas();
+    addWatermark(c);
+    const format = document.getElementById('dlFormat').value;
+    const quality = parseInt(document.getElementById('dlQuality').value) / 100;
+    const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+    const ext = format === 'png' ? 'png' : 'jpg';
+    downloadDataUrl(c.toDataURL(mime, quality), `证件照_排版_预览_${currentSize.name}.${ext}`);
+  } else {
+    const c = generateFinalCanvas();
+    addWatermark(c);
+    const format = document.getElementById('dlFormat').value;
+    let quality = parseInt(document.getElementById('dlQuality').value) / 100;
+    const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+    const ext = format === 'png' ? 'png' : 'jpg';
+    downloadDataUrl(c.toDataURL(mime, quality), `证件照_预览_${currentSize.name}.${ext}`);
+  }
+}
+
+function unlockDownload() {
+  const input = document.getElementById('unlockCode').value.trim().toUpperCase();
+  if (UNLOCK_CODES.includes(input)) {
+    localStorage.setItem('idphoto_paid', '1');
+    closePayModal();
+    downloadClean(pendingDownloadType);
+  } else {
+    document.getElementById('codeErr').style.display = 'block';
+  }
+}
+
+function downloadClean(type) {
+  if (type === 'sheet') { downloadSheetClean(); }
+  else { downloadSingleClean(); }
+}
+
+function downloadSingleClean() {
+  if (!img) return;
   const c = generateFinalCanvas();
   const format = document.getElementById('dlFormat').value;
   let quality = parseInt(document.getElementById('dlQuality').value) / 100;
   const maxKb = parseInt(document.getElementById('dlMaxKb').value);
-
-  // 如果有KB限制，自动调节质量
   if (maxKb && format === 'jpeg') {
     let dataUrl = c.toDataURL('image/jpeg', quality);
     let bytes = Math.round((dataUrl.length - 22) * 3 / 4);
@@ -805,25 +924,31 @@ function downloadSingle() {
   } else {
     const mime = format === 'png' ? 'image/png' : 'image/jpeg';
     const ext = format === 'png' ? 'png' : 'jpg';
-    const dataUrl = c.toDataURL(mime, quality);
-    downloadDataUrl(dataUrl, `证件照_${currentSize.name}_${currentSize.w}x${currentSize.h}.${ext}`);
+    downloadDataUrl(c.toDataURL(mime, quality), `证件照_${currentSize.name}_${currentSize.w}x${currentSize.h}.${ext}`);
   }
 }
 
-function downloadSheet() {
+function downloadSheetClean() {
   if (!img) return;
+  const c = generateSheetCanvas();
+  const format = document.getElementById('dlFormat').value;
+  const quality = parseInt(document.getElementById('dlQuality').value) / 100;
+  const mime = format === 'png' ? 'image/png' : 'image/jpeg';
+  const ext = format === 'png' ? 'png' : 'jpg';
+  downloadDataUrl(c.toDataURL(mime, quality), `证件照_排版_${currentSize.name}_${layoutCols}x${layoutRows}.${ext}`);
+}
+
+function generateSheetCanvas() {
   const singleCanvas = generateFinalCanvas();
   const size = currentSize;
   const gap = 12, margin = 30;
   const cols = layoutCols, rows = layoutRows;
-
   const c = document.createElement('canvas');
   c.width = cols * size.w + (cols - 1) * gap + margin * 2;
   c.height = rows * size.h + (rows - 1) * gap + margin * 2;
   const ctx = c.getContext('2d');
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, c.width, c.height);
-
   for (let r = 0; r < rows; r++) {
     for (let col = 0; col < cols; col++) {
       const x = margin + col * (size.w + gap);
@@ -831,8 +956,6 @@ function downloadSheet() {
       ctx.drawImage(singleCanvas, x, y);
     }
   }
-
-  // 添加裁切线标记
   ctx.strokeStyle = '#ccc';
   ctx.lineWidth = 0.5;
   ctx.setLineDash([3, 3]);
@@ -845,24 +968,42 @@ function downloadSheet() {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(c.width, y); ctx.stroke();
   }
   ctx.setLineDash([]);
-
-  const format = document.getElementById('dlFormat').value;
-  const quality = parseInt(document.getElementById('dlQuality').value) / 100;
-  const mime = format === 'png' ? 'image/png' : 'image/jpeg';
-  const ext = format === 'png' ? 'png' : 'jpg';
-  const dataUrl = c.toDataURL(mime, quality);
-  downloadDataUrl(dataUrl, `证件照_排版_${currentSize.name}_${cols}x${rows}.${ext}`);
-}
-
-function downloadDataUrl(dataUrl, filename) {
-  const link = document.createElement('a');
-  link.download = filename;
-  link.href = dataUrl;
-  link.click();
+  return c;
 }
 
 // ====== 初始化 ======
 init();
 </script>
+
+<!-- 付费弹窗 -->
+<div class="pay-overlay" id="payOverlay">
+  <div class="pay-modal">
+    <button class="close-btn" onclick="closePayModal()">&times;</button>
+    <h2>获取无水印高清证件照</h2>
+    <div class="price-tag">¥3.9<small>原价¥9.9</small></div>
+    <p class="price-note">一次付费，永久使用，不限次数下载</p>
+    <div class="benefits">
+      <span>✅ 无水印</span><span>✅ 高清原图</span><span>✅ 永久有效</span>
+    </div>
+    <div class="qr-area" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:flex-start">
+      <div style="text-align:center">
+        <img src="img/wechat-pay.jpg" style="width:150px;height:150px;border-radius:8px;object-fit:contain;border:1px solid #e2e8f0" alt="微信扫码支付">
+        <p style="margin-top:6px;font-size:12px;color:#07c160;font-weight:600">💚 微信支付</p>
+      </div>
+      <div style="text-align:center">
+        <img src="img/alipay.jpg" style="width:150px;height:150px;border-radius:8px;object-fit:contain;border:1px solid #e2e8f0" alt="支付宝扫码支付">
+        <p style="margin-top:6px;font-size:12px;color:#1677ff;font-weight:600">💙 支付宝支付</p>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#64748b;margin:10px 0">任选一种扫码支付 ¥3.9 → 付款后输入取件码下载</p>
+    <div class="code-input-row">
+      <input type="text" id="unlockCode" placeholder="输入取件码" maxlength="10" onkeyup="if(event.key==='Enter')unlockDownload()">
+      <button onclick="unlockDownload()">解锁下载</button>
+    </div>
+    <p class="code-err" id="codeErr">❌ 取件码错误，请检查后重试</p>
+    <button class="free-dl-btn" onclick="downloadFree()">📥 免费下载（带水印预览版）</button>
+  </div>
+</div>
+
 </body>
 </html>
